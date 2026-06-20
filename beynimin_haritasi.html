@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beynimin Haritası - Muhammet Emir</title>
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+<style>
+/* Ana Arka Plan */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+body {
+    font-family: 'Nunito', 'Segoe UI', -apple-system, sans-serif;
+    background: linear-gradient(180deg, #00b4db 0%, #4facfe 40%, #87ceeb 60%);
+    position: relative;
+}
+
+/* Güneş */
+.sun {
+    position: absolute;
+    top: 5%;
+    right: 10%;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, #ffffff 0%, #fff7b0 40%, #ffd700 80%);
+    border-radius: 50%;
+    box-shadow: 0 0 50px #ffaa00, 0 0 100px #ffd700, 0 0 150px #ffffff;
+    z-index: 0;
+    animation: sunPulse 3s infinite alternate;
+}
+.sun::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        rgba(255, 255, 255, 0) 0deg,
+        rgba(255, 255, 255, 0) 10deg,
+        rgba(255, 230, 100, 0.2) 15deg,
+        rgba(255, 255, 255, 0) 20deg,
+        rgba(255, 255, 255, 0) 40deg,
+        rgba(255, 230, 100, 0.2) 45deg,
+        rgba(255, 255, 255, 0) 50deg,
+        rgba(255, 255, 255, 0) 70deg,
+        rgba(255, 230, 100, 0.2) 75deg,
+        rgba(255, 255, 255, 0) 80deg,
+        rgba(255, 255, 255, 0) 100deg,
+        rgba(255, 230, 100, 0.2) 105deg,
+        rgba(255, 255, 255, 0) 110deg,
+        rgba(255, 255, 255, 0) 130deg,
+        rgba(255, 230, 100, 0.2) 135deg,
+        rgba(255, 255, 255, 0) 140deg,
+        rgba(255, 255, 255, 0) 160deg,
+        rgba(255, 230, 100, 0.2) 165deg,
+        rgba(255, 255, 255, 0) 170deg,
+        rgba(255, 255, 255, 0) 190deg,
+        rgba(255, 230, 100, 0.2) 195deg,
+        rgba(255, 255, 255, 0) 200deg,
+        rgba(255, 255, 255, 0) 220deg,
+        rgba(255, 230, 100, 0.2) 225deg,
+        rgba(255, 255, 255, 0) 230deg,
+        rgba(255, 255, 255, 0) 250deg,
+        rgba(255, 230, 100, 0.2) 255deg,
+        rgba(255, 255, 255, 0) 260deg,
+        rgba(255, 255, 255, 0) 280deg,
+        rgba(255, 230, 100, 0.2) 285deg,
+        rgba(255, 255, 255, 0) 290deg,
+        rgba(255, 255, 255, 0) 310deg,
+        rgba(255, 230, 100, 0.2) 315deg,
+        rgba(255, 255, 255, 0) 320deg,
+        rgba(255, 255, 255, 0) 340deg,
+        rgba(255, 230, 100, 0.2) 345deg,
+        rgba(255, 255, 255, 0) 350deg
+    );
+    filter: blur(3px);
+    z-index: -1;
+    animation: rotateRays 50s linear infinite;
+    pointer-events: none;
+}
+.sun::after {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: -30px;
+    right: -30px;
+    bottom: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,220,100,0.3) 50%, rgba(255,220,100,0) 80%);
+    z-index: -1;
+    animation: sunGlow 4s infinite alternate ease-in-out;
+    pointer-events: none;
+}
+@keyframes sunPulse {
+    0% { transform: scale(1); opacity: 0.95; }
+    100% { transform: scale(1.05); opacity: 1; }
+}
+@keyframes rotateRays {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes sunGlow {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.25); opacity: 1; }
+}
+
+/* Bulutlar */
+.clouds-container {
+    position: absolute;
+    top: 5%;
+    left: 0;
+    width: 100%;
+    height: 38%;
+    z-index: 0;
+    pointer-events: none;
+}
+.cloud {
+    position: absolute;
+    filter: drop-shadow(0 8px 12px rgba(0, 30, 60, 0.05));
+    animation: drift linear infinite;
+}
+.cloud1 { width: 220px; height: 100px; top: 4%; animation-duration: 110s; }
+.cloud2 { width: 200px; height: 90px; top: 20%; animation-duration: 160s; animation-delay: -40s; }
+.cloud3 { width: 170px; height: 80px; top: 10%; animation-duration: 210s; animation-delay: -80s; }
+.cloud4 { width: 250px; height: 70px; top: 2%; animation-duration: 290s; animation-delay: -110s; opacity: 0.65; }
+
+@keyframes drift {
+    0% { left: -260px; }
+    100% { left: 110vw; }
+}
+
+/* Uçak */
+.airplane {
+    position: absolute;
+    top: 20%;
+    z-index: 2;
+    pointer-events: auto;
+    animation: flyPlane 35s linear infinite;
+}
+@keyframes flyPlane {
+    0% { left: -150px; top: 30%; transform: scale(0.7) rotate(-8deg); }
+    100% { left: 110vw; top: 10%; transform: scale(1.1) rotate(-8deg); }
+}
+
+/* Ufuk Çizgisindeki Ada */
+.island {
+    position: absolute;
+    bottom: calc(52% - 27px); /* Ocean is bottom 12%, height 40%. Horizon sits at bottom 52% */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 450px;
+    height: 135px;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Volkanik Duman Animasyonu */
+.smoke-particle {
+    animation: riseSmoke 8s infinite ease-out;
+    transform-origin: 215px 62px;
+}
+.smoke-particle.p1 { animation-delay: 0s; }
+.smoke-particle.p2 { animation-delay: 1s; }
+.smoke-particle.p3 { animation-delay: 2s; }
+.smoke-particle.p4 { animation-delay: 3s; }
+.smoke-particle.p5 { animation-delay: 4s; }
+.smoke-particle.p6 { animation-delay: 5s; }
+.smoke-particle.p7 { animation-delay: 6s; }
+.smoke-particle.p8 { animation-delay: 7s; }
+
+@keyframes riseSmoke {
+    0% {
+        transform: translateY(0) scale(0.6);
+        opacity: 0;
+    }
+    8% {
+        opacity: 0.5;
+    }
+    40% {
+        transform: translateY(-25px) translateX(-6px) scale(1.5);
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateY(-60px) translateX(-18px) scale(2.8);
+        opacity: 0;
+    }
+}
+
+/* Ufuk Çizgisindeki Vapur */
+.steamboat {
+    position: absolute;
+    bottom: calc(52% - 8px); /* Ocean top is 52%. Sits on horizon, slightly offset for waterline */
+    left: 15%; /* Left side of the horizon */
+    width: 75px;
+    height: 38px;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+    animation: floatSteamboat 5s infinite alternate ease-in-out;
+}
+
+@keyframes floatSteamboat {
+    0% { transform: translateY(0) rotate(-1deg); }
+    100% { transform: translateY(-2.5px) rotate(1deg); }
+}
+
+/* Vapur Duman Animasyonu */
+.steam-particle {
+    animation: riseSteam 4s infinite linear;
+    transform-origin: 39.5px 3px;
+}
+.steam-particle.s1 { animation-delay: 0s; }
+.steam-particle.s2 { animation-delay: 1.3s; }
+.steam-particle.s3 { animation-delay: 2.6s; }
+
+@keyframes riseSteam {
+    0% {
+        transform: translateY(0) scale(0.5);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    50% {
+        transform: translateY(-8px) translateX(-4px) scale(1.2);
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateY(-18px) translateX(-10px) scale(1.8);
+        opacity: 0;
+    }
+}
+
+/* Okyanus */
+.ocean {
+    position: absolute;
+    bottom: 12%;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: linear-gradient(180deg, rgba(0, 150, 255, 0.6) 0%, rgba(0, 204, 255, 0.8) 50%, rgba(0, 102, 204, 0.9) 100%);
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* Dalgalar */
+.wave {
+    position: absolute;
+    width: 200%;
+    background-repeat: repeat-x;
+}
+.wave.w1 {
+    top: 0%;
+    height: 100%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,20 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.06)"/><path d="M0,50 Q100,20 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 200px 100%;
+    animation: wave-move-w1 20s linear infinite;
+    opacity: 0.6;
+}
+.wave.w2 {
+    top: 15%;
+    height: 85%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,25 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.05)"/><path d="M0,50 Q100,25 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 280px 100%;
+    animation: wave-move-w2 16s linear infinite reverse;
+    opacity: 0.7;
+}
+.wave.w3 {
+    top: 32%;
+    height: 68%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,25 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.04)"/><path d="M0,50 Q100,25 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 360px 100%;
+    animation: wave-move-w3 13s linear infinite;
+    opacity: 0.8;
+}
+.wave.w4 {
+    top: 50%;
+    height: 50%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,20 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.04)"/><path d="M0,50 Q100,20 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 440px 100%;
+    animation: wave-move-w4 10s linear infinite reverse;
+    opacity: 0.85;
+}
+.wave.w5 {
+    top: 68%;
+    height: 32%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,15 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.03)"/><path d="M0,50 Q100,15 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="3" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 520px 100%;
+    animation: wave-move-w5 8s linear infinite;
+    opacity: 0.9;
+}
+.wave.w6 {
+    top: 84%;
+    height: 16%;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 100" xmlns="http://www.w3.org/2000/svg"><path d="M0,50 Q100,10 200,50 T400,50 T600,50 T800,50 V100 H0 Z" fill="rgba(255,255,255,0.03)"/><path d="M0,50 Q100,10 200,50 T400,50 T600,50 T800,50" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="3" stroke-linecap="round"/></svg>') repeat-x;
+    background-size: 600px 100%;
+    animation: wave-move-w6 6s linear infinite reverse;
+    opacity: 0.95;
+}
+
+@keyframes wave-move-w1 { 0% { transform: translateX(0); } 100% { transform: translateX(-200px); } }
+@keyframes wave-move-w2 { 0% { transform: translateX(0); } 100% { transform: translateX(-280px); } }
+@keyframes wave-move-w3 { 0% { transform: translateX(0); } 100% { transform: translateX(-360px); } }
+@keyframes wave-move-w4 { 0% { transform: translateX(0); } 100% { transform: translateX(-440px); } }
+@keyframes wave-move-w5 { 0% { transform: translateX(0); } 100% { transform: translateX(-520px); } }
+@keyframes wave-move-w6 { 0% { transform: translateX(0); } 100% { transform: translateX(-600px); } }
+
+/* Deniz Parlamaları */
+.sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.8);
+    animation: twinkle 3s infinite ease-in-out;
+}
+@keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* Sahil */
+.beach {
+    position: absolute;
+    bottom: -10px; /* Bleed below screen to prevent any gaps */
+    left: 0;
+    width: 100%;
+    height: calc(15% + 10px);
+    background: linear-gradient(180deg, #fad674 0%, #f5a800 100%);
+    box-shadow: 0 -12px 25px -5px rgba(255, 255, 255, 0.6);
+    z-index: 0;
+}
+.beach::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 60%);
+    background-size: 120px 20px;
+    background-repeat: repeat-x;
+    opacity: 0.85;
+    animation: wave-foam 3.5s infinite alternate ease-in-out;
+}
+@keyframes wave-foam {
+    0% { transform: translateY(0px) scaleY(1); opacity: 0.6; }
+    100% { transform: translateY(4px) scaleY(1.2); opacity: 0.95; }
+}
+
+/* Sahil Eşyaları */
+.beach-item {
+    position: absolute;
+    z-index: 1;
+    filter: drop-shadow(0 5px 3px rgba(0,0,0,0.4));
+    user-select: none;
+    display: flex;
+    align-items: flex-end;
+}
+.umbrella { 
+    font-size: 1em; 
+    position: relative; 
+    z-index: 2; 
+}
+
+/* Dinamik Kenar Bitkileri */
+.bush {
+    position: absolute;
+    z-index: 3;
+    pointer-events: none; 
+    user-select: none;
+    --h: 0deg; 
+    --b: 1;    
+    --s: 1;
+    filter: drop-shadow(0 10px 5px rgba(0,0,0,0.4)) hue-rotate(var(--h)) brightness(var(--b)) saturate(var(--s));
+}
+
+/* Palmiye Ağaçları */
+.palm-tree {
+    position: absolute;
+    line-height: 1;
+    filter: drop-shadow(0 20px 15px rgba(0, 0, 0, 0.5));
+    z-index: 3;
+    pointer-events: none;
+    user-select: none;
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+}
+.palm-1 { left: -2%; bottom: -12%; font-size: 280px; transform: rotate(-5deg); }
+.palm-2 { left: 8%; bottom: -6%; font-size: 220px; transform: rotate(-12deg); filter: hue-rotate(-15deg) drop-shadow(0 10px 5px rgba(0, 0, 0, 0.4)) brightness(0.85); }
+.palm-3 { left: 16%; bottom: 0%; font-size: 160px; transform: rotate(-8deg); filter: hue-rotate(15deg) brightness(0.9); }
+.palm-4 { right: -3%; bottom: -14%; font-size: 320px; transform: rotate(5deg) scaleX(-1); }
+.palm-5 { right: 7%; bottom: -8%; font-size: 260px; transform: rotate(15deg) scaleX(-1); filter: hue-rotate(-20deg) brightness(0.8); }
+.palm-6 { right: 15%; bottom: -2%; font-size: 190px; transform: rotate(8deg) scaleX(-1); filter: hue-rotate(10deg); }
+.palm-7 { right: 23%; bottom: 4%; font-size: 130px; transform: rotate(12deg) scaleX(-1); filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3)) brightness(0.9); }
+
+
+/* Rüzgar Salınım Efektleri Kaldırıldı */
+
+/* Karşı Adadaki Ağaçlar sabit kalıyor (1120+ <use> elemanı olduğu için animasyon yapmak aşırı kasma yaratır) */
+#palm1, #palm2 {
+    transform-origin: 5px 40px;
+}
+
+/* Tekneler */
+.boat-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+.boat-wrapper {
+    position: absolute;
+    animation: sail linear infinite;
+    pointer-events: auto;
+    cursor: pointer;
+}
+.boat {
+    font-size: 50px;
+    filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.3));
+    user-select: none;
+    animation: floatBoat 3s infinite alternate ease-in-out;
+}
+.bw-1 { bottom: 32%; animation-duration: 50s; transform: scale(1); }
+.bw-2 { bottom: 45%; animation-duration: 70s; animation-delay: -20s; transform: scale(0.65); animation-name: sailReverse; }
+.bw-3 { bottom: 25%; animation-duration: 40s; animation-delay: -15s; transform: scale(1.2); }
+.bw-4 { bottom: 38%; animation-duration: 60s; animation-delay: -45s; transform: scale(0.8); animation-name: sailReverse; }
+
+@keyframes sail {
+    0% { left: -100px; transform: scaleX(1); }
+    100% { left: 110vw; transform: scaleX(1); }
+}
+@keyframes sailReverse {
+    0% { left: 110vw; transform: scaleX(-1); }
+    100% { left: -100px; transform: scaleX(-1); }
+}
+@keyframes floatBoat {
+    0% { transform: translateY(0) rotate(-3deg); }
+    100% { transform: translateY(-12px) rotate(3deg); }
+}
+
+
+/* Kuşlar */
+.birds-container {
+    position: absolute;
+    top: 8%;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    z-index: 1;
+    pointer-events: none;
+}
+.bird {
+    position: absolute;
+    left: 0;
+    width: 38px;
+    height: 38px;
+    animation: fly 20s linear infinite;
+    filter: drop-shadow(0 4px 3px rgba(0,0,0,0.15));
+    --s: 1;
+}
+.bird svg {
+    width: 100%;
+    height: 100%;
+}
+.wing {
+    transform-origin: 30px 20px;
+    transform-box: view-box;
+    animation: flap-left 0.4s infinite alternate ease-in-out;
+}
+.bird:nth-child(1) .wing.left-wing { animation: flap-left 0.35s infinite alternate ease-in-out -0.1s; }
+.bird:nth-child(1) .wing.right-wing { animation: flap-right 0.35s infinite alternate ease-in-out -0.1s; }
+
+.bird:nth-child(2) .wing.left-wing { animation: flap-left 0.45s infinite alternate ease-in-out -0.5s; }
+.bird:nth-child(2) .wing.right-wing { animation: flap-right 0.45s infinite alternate ease-in-out -0.5s; }
+
+.bird:nth-child(3) .wing.left-wing { animation: flap-left 0.40s infinite alternate ease-in-out -0.3s; }
+.bird:nth-child(3) .wing.right-wing { animation: flap-right 0.40s infinite alternate ease-in-out -0.3s; }
+
+.bird:nth-child(1) { top: 20px; animation-duration: 18s; animation-delay: -5s; --s: 1; }
+.bird:nth-child(2) { top: 60px; animation-duration: 25s; animation-delay: -12s; --s: 0.8; }
+.bird:nth-child(3) { top: 100px; animation-duration: 22s; animation-delay: -2s; --s: 0.6; }
+
+@keyframes fly {
+    0% { transform: translateX(-10vw) translateY(0) scale(var(--s)); }
+    50% { transform: translateX(50vw) translateY(-35px) scale(var(--s)); }
+    100% { transform: translateX(110vw) translateY(0) scale(var(--s)); }
+}
+
+@keyframes flap-left {
+    0% { transform: rotate(-22deg); }
+    100% { transform: rotate(18deg); }
+}
+@keyframes flap-right {
+    0% { transform: rotate(22deg); }
+    100% { transform: rotate(-18deg); }
+}
+
+/* Katmanlar */
+#ripple-layer { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 3; 
+    pointer-events: none; 
+    outline: none !important;
+}
+#network-container { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    z-index: 4; 
+    outline: none !important;
+}
+#network-container canvas {
+    outline: none !important;
+}
+
+/* Bilgi Paneli */
+#detail-panel {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    width: 340px;
+    padding: 25px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 100, 200, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.6);
+    z-index: 10;
+    transform: translateX(130%);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: #003366;
+}
+
+#detail-panel.active { transform: translateX(0); }
+#panel-title { margin-top: 0; font-size: 1.6rem; font-weight: 800; color: #002244; border-bottom: 1px solid rgba(0, 150, 255, 0.3); padding-bottom: 10px; }
+#panel-content { font-size: 1.1rem; line-height: 1.6; margin-top: 15px; font-weight: 600; color: #003366; }
+.close-btn {
+    position: absolute; top: 15px; right: 15px; cursor: pointer;
+    background: linear-gradient(180deg, rgba(102, 204, 255, 0.8) 0%, rgba(0, 136, 204, 0.8) 100%);
+    color: white; border: 1px solid rgba(255,255,255,0.7);
+    border-radius: 50%; width: 32px; height: 32px; font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+.close-btn:hover { transform: scale(1.15); }
+
+/* Müzik Kontrol Butonu */
+.music-control {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 10px 25px rgba(0, 100, 200, 0.15), inset 0 0 10px rgba(255, 255, 255, 0.5);
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
+}
+.music-control:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 30px rgba(0, 100, 200, 0.25);
+}
+.music-control:active {
+    transform: scale(0.95);
+}
+.music-waves {
+    display: flex;
+    align-items: flex-end;
+    gap: 3.5px;
+    height: 18px;
+}
+.music-bar {
+    width: 3.5px;
+    height: 4px;
+    background-color: #002244;
+    border-radius: 1.7px;
+    transition: height 0.25s ease;
+}
+.music-control.playing .music-bar {
+    animation: dance 1s ease-in-out infinite alternate;
+}
+.music-control.playing .music-bar:nth-child(1) { animation-duration: 0.8s; }
+.music-control.playing .music-bar:nth-child(2) { animation-duration: 1.1s; }
+.music-control.playing .music-bar:nth-child(3) { animation-duration: 0.9s; }
+.music-control.playing .music-bar:nth-child(4) { animation-duration: 1.2s; }
+
+@keyframes dance {
+    0% { height: 4px; }
+    100% { height: 18px; }
+}
+
+/* Oyun Skor Gösterge Paneli */
+.game-dashboard {
+    position: absolute;
+    top: 100px;
+    left: 30px;
+    width: 210px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    box-shadow: 0 5px 15px rgba(0, 100, 200, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.5);
+    z-index: 10;
+    color: #003366;
+    font-family: 'Nunito', sans-serif;
+    user-select: none;
+    pointer-events: auto;
+    
+    /* Sliding animation values */
+    transform: translateX(calc(-100% - 14px));
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+.game-dashboard:hover,
+.game-dashboard.force-open {
+    transform: translateX(0);
+    box-shadow: 0 15px 35px rgba(0, 100, 200, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+/* Görünmez hover köprüsü: Panel açıldığında sol kenar ile panel arasındaki 30px'lik boşluğu kapatarak mouse'un odaktan çıkıp titreme (hover bug) yapmasını önler */
+.game-dashboard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40px;
+    width: 40px;
+    height: 100%;
+    background: transparent;
+    pointer-events: auto;
+    z-index: -1;
+}
+.dashboard-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 150, 255, 0.25);
+    padding-bottom: 6px;
+    color: #002244;
+}
+.stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+.stat-item:last-child {
+    margin-bottom: 0;
+}
+.stat-icon {
+    font-size: 1.15rem;
+    margin-right: 8px;
+}
+.stat-label {
+    flex-grow: 1;
+}
+.stat-value {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #002244;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 2px 8px;
+    border-radius: 8px;
+    min-width: 22px;
+    text-align: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Tekne ve Uçak Etkileşim Cursors */
+.boat-wrapper, .airplane {
+    cursor: pointer;
+    pointer-events: auto !important;
+}
+
+/* Sinking Boat Animation */
+@keyframes boatSink {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    15% {
+        transform: translateY(-12px) rotate(15deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(160px) rotate(55deg);
+        opacity: 0;
+    }
+}
+.animate-boat-sink {
+    animation: boatSink 0.8s forwards cubic-bezier(0.55, 0.05, 0.675, 0.19) !important;
+}
+
+/* Crashing Airplane Animation */
+@keyframes planeCrash {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    15% {
+        transform: translateY(-25px) rotate(-15deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(650px) rotate(85deg);
+        opacity: 0;
+    }
+}
+.animate-plane-crash {
+    animation: planeCrash 1.0s forwards cubic-bezier(0.55, 0.05, 0.675, 0.19) !important;
+}
+
+/* Challenge CSS */
+.challenge-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #00f2fe 0%, #00b4db 100%);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 5px;
+    outline: none;
+}
+.challenge-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+}
+.challenge-btn:active {
+    transform: translateY(0);
+}
+.leaderboard-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 150, 255, 0.2);
+    padding-bottom: 4px;
+    color: #002244;
+}
+.leaderboard-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+.leaderboard-item {
+    margin-bottom: 4px;
+    color: #003366;
+}
+.leaderboard-item span {
+    font-weight: 800;
+    color: #002244;
+}
+
+/* Custom Modal Styles */
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 34, 68, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+.modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.75) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 24px;
+    padding: 30px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 50, 100, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    font-family: 'Nunito', sans-serif;
+    color: #003366;
+}
+.modal-title {
+    margin-top: 0;
+    color: #002244;
+    font-weight: 800;
+    font-size: 1.35rem;
+}
+.modal-text {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 8px 0;
+}
+.modal-input {
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+    border: 1.5px solid rgba(0, 150, 255, 0.4);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #002244;
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: 8px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.modal-input:focus {
+    border-color: #00b4db;
+    box-shadow: 0 0 8px rgba(0, 180, 219, 0.25);
+}
+.modal-error {
+    color: #d32f2f;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+.modal-btn {
+    background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 180, 219, 0.45);
+}
+.modal-btn:active {
+    transform: translateY(0);
+}
+
+/* Dönüm Noktası Kelime Popupları */
+.milestone-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 5.5rem;
+    z-index: 1000;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    text-align: center;
+    color: #00e5ff; /* Turkuaz/Mavi renk */
+    text-shadow: 0 0 10px rgba(0, 34, 68, 0.9), 0 0 20px rgba(0, 180, 219, 0.8), 0 0 30px rgba(255, 255, 255, 0.9);
+    opacity: 0;
+    animation: flatFade 1.8s ease-in-out forwards;
+}
+
+@keyframes flatFade {
+    0% {
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Başlangıç Geri Sayım Arayüzü */
+.countdown-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    font-size: 8rem;
+    color: #00e5ff;
+    text-shadow: 0 0 15px rgba(0, 34, 68, 0.9), 0 0 30px rgba(0, 180, 219, 0.8), 0 0 45px rgba(255, 255, 255, 0.9);
+    z-index: 1001;
+    pointer-events: none;
+    text-align: center;
+}
+
+@keyframes countdownPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+    }
+    30% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1.0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Meydan Okuma Rehber Ok İşareti */
+.challenge-arrow-guide {
+    position: absolute;
+    top: 125px;
+    left: 28px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 4px 10px rgba(0, 180, 219, 0.2), inset 0 0 5px rgba(255, 255, 255, 0.4);
+    z-index: 9; /* Sürgülü panelin (z-index: 10) altında kalarak panel açıldığında temizce gizlenir */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    
+    animation: arrowBounce 1.2s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+    0%, 100% {
+        transform: translateX(0);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translateX(-6px);
+        opacity: 1;
+    }
+}
+
+</style>
+</head>
+<body>
+<!-- Arka Plan Müziği -->
+<audio id="bg-music" autoplay loop preload="auto">
+    <source src="muzik.mp3" type="audio/mp3">
+</audio>
+
+<!-- Müzik Kontrol Düğmesi -->
+<div class="music-control" id="music-control" onclick="toggleMusic(event)" title="Müziği Aç/Kapat">
+    <div class="music-waves">
+        <div class="music-bar"></div>
+        <div class="music-bar"></div>
+        <div class="music-bar"></div>
+        <div class="music-bar"></div>
+    </div>
+</div>
+
+<!-- Meydan Okuma Paneli Kılavuz Oku -->
+<div class="challenge-arrow-guide">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+</div>
+
+<!-- Oyun Meydan Okuma Paneli (Sol Üst Köşede) -->
+<div class="game-dashboard" id="challenge-panel">
+    <div class="dashboard-title">🏆 Büyük Meydan Okuma</div>
+    
+    <div id="challenge-idle">
+        <p style="font-size: 0.8rem; margin-top: 0; margin-bottom: 10px; font-weight: 700; line-height: 1.4;">60 saniyede en çok balonu patlat, tekneyi batır ve uçağı düşür! En yüksek skoru yapıp rekorlar listesine gir!</p>
+        <button class="challenge-btn" id="start-challenge-btn" onclick="startChallenge()">Meydan Okumayı Başlat</button>
+    </div>
+    
+    <div id="challenge-active" style="display: none;">
+        <div class="stat-item">
+            <span class="stat-icon">⏱️</span>
+            <span class="stat-label">Kalan Süre:</span>
+            <span class="stat-value" id="challenge-timer" style="color: #d32f2f;">60</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">💥</span>
+            <span class="stat-label">Meydan Okuma Skoru:</span>
+            <span class="stat-value" id="challenge-score">0</span>
+        </div>
+    </div>
+    
+    <div class="leaderboard-section">
+        <div class="leaderboard-title">🥇 En İyi Rekorlar</div>
+        <ol class="leaderboard-list" id="leaderboard-list">
+            <!-- Rekorlar dinamik yüklenecek -->
+        </ol>
+    </div>
+</div>
+
+
+
+<div class="sun"></div>
+<div class="clouds-container">
+    <!-- Bulut 1 (Büyük / Hızlı / Alçak) -->
+    <div class="cloud cloud1">
+        <svg viewBox="0 0 220 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="cloudGradLight" x1="0%" y1="100%" x2="70%" y2="0%">
+                    <stop offset="0%" stop-color="#b0bec5" stop-opacity="0.25" />
+                    <stop offset="60%" stop-color="#ffffff" stop-opacity="0.85" />
+                    <stop offset="100%" stop-color="#fffde7" stop-opacity="0.95" />
+                </linearGradient>
+                <filter id="blurMedium" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3.5" />
+                </filter>
+            </defs>
+            <path d="M 40 75 C 25 75 15 62 25 50 C 15 32 38 22 55 32 C 68 15 95 12 115 28 C 130 18 155 18 165 32 C 182 32 192 45 185 62 C 195 72 185 85 165 85 Z" fill="url(#cloudGradLight)" filter="url(#blurMedium)" />
+            <path d="M 50 72 C 40 72 32 62 40 52 C 32 38 50 30 63 38 C 73 22 98 20 115 32 C 127 22 148 22 156 38 C 170 38 178 48 172 62 Z" fill="#ffffff" opacity="0.45" filter="url(#blurMedium)" transform="translate(6, -2) scale(0.93)" />
+        </svg>
+    </div>
+    <!-- Bulut 2 (Orta / Yavaş / Orta Yükseklik) -->
+    <div class="cloud cloud2">
+        <svg viewBox="0 0 220 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="cloudGradMedium" x1="0%" y1="100%" x2="70%" y2="0%">
+                    <stop offset="0%" stop-color="#90a4ae" stop-opacity="0.20" />
+                    <stop offset="60%" stop-color="#ffffff" stop-opacity="0.80" />
+                    <stop offset="100%" stop-color="#fffde7" stop-opacity="0.90" />
+                </linearGradient>
+            </defs>
+            <path d="M 45 70 C 30 70 22 58 30 48 C 22 32 42 22 58 32 C 68 15 92 12 110 28 C 122 18 145 18 155 32 C 170 32 180 42 175 58 C 185 68 175 80 155 80 Z" fill="url(#cloudGradMedium)" filter="url(#blurMedium)" />
+        </svg>
+    </div>
+    <!-- Bulut 3 (Küçük / Çok Yavaş / Yüksek) -->
+    <div class="cloud cloud3">
+        <svg viewBox="0 0 220 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 50 68 C 38 68 32 58 38 50 C 32 38 48 30 60 38 C 68 25 88 22 102 32 C 112 25 130 25 138 38 C 148 38 156 46 152 58 C 160 66 152 76 138 76 Z" fill="url(#cloudGradMedium)" filter="url(#blurMedium)" />
+        </svg>
+    </div>
+    <!-- Bulut 4 (Tül/Wispy / Çok Yüksek / Neredeyse Sabit) -->
+    <div class="cloud cloud4">
+        <svg viewBox="0 0 220 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="blurHigh" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="6.5" />
+                </filter>
+            </defs>
+            <path d="M 30 50 Q 60 35 90 45 T 150 42 T 200 50 Q 150 58 90 52 Z" fill="#ffffff" opacity="0.75" filter="url(#blurHigh)" />
+        </svg>
+    </div>
+</div>
+
+<!-- Ufuk Çizgisindeki Ada -->
+<div class="island">
+    <svg viewBox="0 0 500 150" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="farMountainGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#4facfe" stop-opacity="0.7" />
+                <stop offset="100%" stop-color="#00b4db" stop-opacity="0.4" />
+            </linearGradient>
+            <linearGradient id="nearIslandGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2d8a68" />
+                <stop offset="50%" stop-color="#196147" />
+                <stop offset="100%" stop-color="#0b3024" />
+            </linearGradient>
+            <linearGradient id="islandBeachGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#b88d4c" />
+                <stop offset="50%" stop-color="#fad674" />
+                <stop offset="100%" stop-color="#b88d4c" />
+            </linearGradient>
+            <linearGradient id="islandReflection" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#196147" stop-opacity="0.6" />
+                <stop offset="30%" stop-color="#0b3024" stop-opacity="0.3" />
+                <stop offset="100%" stop-color="#00b4db" stop-opacity="0" />
+            </linearGradient>
+            <!-- Yanardağ Renk Geçişi -->
+            <linearGradient id="volcanoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#212121" />
+                <stop offset="30%" stop-color="#3e2723" />
+                <stop offset="70%" stop-color="#4e342e" />
+                <stop offset="100%" stop-color="#1a1a1a" />
+            </linearGradient>
+            <!-- Filtreler -->
+            <filter id="smokeBlur"><feGaussianBlur stdDeviation="3" /></filter>
+            <filter id="lavaBlur"><feGaussianBlur stdDeviation="1.5" /></filter>
+            
+            <!-- Palmiye Ağacı Şablonları (Templates) -->
+            <g id="palm1">
+                <path d="M 10 40 Q 6 18 2 0 Q -1 18 5 40 Z" fill="#051a14" />
+                <path d="M 2 0 Q -12 -5 -22 5 M 2 0 Q -14 -15 -24 -10 M 2 0 Q -6 -22 4 -27 M 2 0 Q 12 -22 22 -22 M 2 0 Q 17 -10 27 0 M 2 0 Q 14 5 20 20 M 2 0 Q -2 12 -8 22" stroke="#051a14" stroke-width="3" stroke-linecap="round" fill="none" />
+            </g>
+            <g id="palm2">
+                <path d="M 10 40 Q 12 18 6 0 Q 3 18 5 40 Z" fill="#051a14" />
+                <path d="M 6 0 Q -8 -5 -18 5 M 6 0 Q -10 -15 -20 -10 M 6 0 Q -2 -22 8 -27 M 6 0 Q 16 -22 26 -22 M 6 0 Q 21 -10 31 0 M 6 0 Q 18 5 24 20" stroke="#051a14" stroke-width="3" stroke-linecap="round" fill="none" />
+            </g>
+        </defs>
+        <!-- Su yansıması -->
+        <ellipse cx="250" cy="122" rx="150" ry="15" fill="url(#islandReflection)" opacity="0.8" />
+        <path d="M 120 120 C 180 125, 320 125, 380 120 C 340 128, 260 132, 120 120 Z" fill="#fad674" opacity="0.3" filter="blur(2px)" />
+        <!-- Arka plan dağlar -->
+        <path d="M 80 120 C 120 95, 140 85, 170 95 C 200 105, 230 75, 270 80 C 310 85, 340 105, 390 120 Z" fill="url(#farMountainGrad)" />
+        
+        <!-- Yanardağ (Volcano) -->
+        <path d="M 170 120 C 190 95, 205 70, 210 65 L 220 65 C 225 70, 240 95, 260 120 Z" fill="url(#volcanoGrad)" />
+        <!-- Akan Lavlar (Lava Flows) -->
+        <path d="M 213 65 Q 212 75 210 85 Q 209 90 208 95" stroke="#ff3d00" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.85" />
+        <path d="M 217 65 Q 219 72 222 80 Q 224 88 223 93" stroke="#ff9100" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.85" />
+        <!-- Lav Krateri ve Işıma (Crater & Glow) -->
+        <ellipse cx="215" cy="65" rx="5" ry="1.5" fill="#ff3d00" />
+        <ellipse cx="215" cy="65" rx="3" ry="1" fill="#ffea00" filter="url(#lavaBlur)" />
+
+        <!-- Ön plan ada tepeleri -->
+        <path d="M 90 120 C 130 90, 160 80, 200 95 C 230 105, 260 85, 300 90 C 330 95, 360 110, 410 120 Z" fill="url(#nearIslandGrad)" />
+        
+        <!-- Yoğun Palmiye Ormanı (Dinamik - 1125 Palmiye) -->
+        <g id="palm-forest"></g>
+
+
+        <!-- Kumsal şeridi -->
+        <path d="M 90 120 C 140 114, 200 113, 250 115 C 300 113, 360 114, 410 120 C 390 123, 250 124, 90 120 Z" fill="url(#islandBeachGrad)" />
+        <!-- Küçük kumsal taşları -->
+        <ellipse cx="210" cy="119" rx="3" ry="1.5" fill="#3e2723" opacity="0.8" />
+        <ellipse cx="285" cy="118.5" rx="4" ry="2" fill="#4e342e" opacity="0.8" />
+        <ellipse cx="140" cy="119.5" rx="2" ry="1" fill="#3e2723" opacity="0.7" />
+        
+        <!-- Volkanik Duman (Volcanic Smoke) -->
+        <g class="smoke-group" filter="url(#smokeBlur)">
+            <circle class="smoke-particle p1" cx="215" cy="62" r="4.0" fill="#cfd8dc" opacity="0" />
+            <circle class="smoke-particle p2" cx="215" cy="62" r="5.0" fill="#b0bec5" opacity="0" />
+            <circle class="smoke-particle p3" cx="215" cy="62" r="4.5" fill="#eceff1" opacity="0" />
+            <circle class="smoke-particle p4" cx="215" cy="62" r="5.5" fill="#cfd8dc" opacity="0" />
+            <circle class="smoke-particle p5" cx="215" cy="62" r="4.2" fill="#b0bec5" opacity="0" />
+            <circle class="smoke-particle p6" cx="215" cy="62" r="5.2" fill="#eceff1" opacity="0" />
+            <circle class="smoke-particle p7" cx="215" cy="62" r="4.7" fill="#cfd8dc" opacity="0" />
+            <circle class="smoke-particle p8" cx="215" cy="62" r="5.8" fill="#b0bec5" opacity="0" />
+        </g>
+    </svg>
+</div>
+
+<!-- Ufuk Çizgisindeki Vapur -->
+<div class="steamboat">
+    <svg viewBox="0 0 80 40" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="steamBlur"><feGaussianBlur stdDeviation="0.8" /></filter>
+        </defs>
+        <!-- Su yansıması -->
+        <ellipse cx="40" cy="33" rx="32" ry="2.5" fill="#1a237e" opacity="0.2" />
+        <!-- Kırmızı gövde altı -->
+        <path d="M 6 28 L 74 28 C 77 28, 79 30, 76 32 C 73 34, 7 34, 4 32 C 1 30, 3 28, 6 28 Z" fill="#d32f2f" />
+        <!-- Siyah gövde üstü -->
+        <path d="M 4 23 L 76 23 L 75 28 L 5 28 Z" fill="#212121" />
+        <!-- Beyaz şerit -->
+        <path d="M 4 23 L 76 23 L 76 24.2 L 4 24.2 Z" fill="#ffffff" />
+        <!-- Alt güverte kabini -->
+        <path d="M 12 23 L 66 23 L 64 17 L 14 17 Z" fill="#ffffff" />
+        <!-- Alt güverte pencereleri -->
+        <g fill="#263238">
+            <rect x="18" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="24" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="30" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="36" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="42" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="48" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="54" y="19" width="3" height="2.5" rx="0.5" />
+            <rect x="60" y="19" width="3" height="2.5" rx="0.5" />
+        </g>
+        <!-- Üst güverte kabini -->
+        <path d="M 20 17 L 58 17 L 57 12 L 22 12 Z" fill="#ffffff" />
+        <!-- Üst güverte pencereleri -->
+        <g fill="#263238">
+            <rect x="25" y="13.5" width="2.5" height="2" rx="0.5" />
+            <rect x="31" y="13.5" width="2.5" height="2" rx="0.5" />
+            <rect x="37" y="13.5" width="2.5" height="2" rx="0.5" />
+            <rect x="43" y="13.5" width="2.5" height="2" rx="0.5" />
+            <rect x="49" y="13.5" width="2.5" height="2" rx="0.5" />
+        </g>
+        <!-- Kaptan köşkü -->
+        <path d="M 58 17 L 62 17 L 60 12 L 57 12 Z" fill="#e0e0e0" />
+        <polygon points="59,13 61,13 60,15.5 58.5,15.5" fill="#263238" />
+        <!-- Baca (Smokestack) -->
+        <rect x="37" y="6" width="5" height="6" fill="#fbc02d" />
+        <rect x="37" y="4" width="5" height="2" fill="#212121" />
+        <!-- Direkler -->
+        <line x1="14" y1="17" x2="14" y2="6" stroke="#90a4ae" stroke-width="0.8" />
+        <line x1="60" y1="12" x2="60" y2="4" stroke="#90a4ae" stroke-width="0.8" />
+        <!-- Türk Bayrağı -->
+        <rect x="10" y="6" width="4" height="2.5" fill="#d32f2f" />
+        <circle cx="11.5" cy="7.2" r="0.5" fill="#ffffff" />
+        <!-- Vapur bacasından çıkan buhar -->
+        <g class="steam-group" filter="url(#steamBlur)">
+            <circle class="steam-particle s1" cx="39.5" cy="3" r="1.5" fill="#f5f5f5" opacity="0" />
+            <circle class="steam-particle s2" cx="39.5" cy="3" r="2.0" fill="#e0e0e0" opacity="0" />
+            <circle class="steam-particle s3" cx="39.5" cy="3" r="1.8" fill="#ffffff" opacity="0" />
+        </g>
+    </svg>
+</div>
+
+
+<!-- Gerçekçi Yolcu Uçağı -->
+<div class="airplane" id="airplane-container">
+    <div class="airplane-body" id="airplane-body" style="position: relative; width: 120px; height: 40px;">
+        <svg viewBox="0 0 120 40" width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="fuselageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#cfd8dc" />
+                    <stop offset="50%" stop-color="#ffffff" />
+                    <stop offset="100%" stop-color="#eceff1" />
+                </linearGradient>
+                <linearGradient id="backWingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#90a4ae" />
+                    <stop offset="100%" stop-color="#546e7a" />
+                </linearGradient>
+                <linearGradient id="engineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#37474f" />
+                    <stop offset="50%" stop-color="#78909c" />
+                    <stop offset="100%" stop-color="#263238" />
+                </linearGradient>
+                <filter id="planeShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#001833" flood-opacity="0.25"/>
+                </filter>
+            </defs>
+            <g filter="url(#planeShadow)">
+                <!-- Arka Yatay Dengeleyici -->
+                <path d="M 12 18 L 2 12 L 5 12 L 17 18 Z" fill="#b0bec5" />
+                <!-- Dikey Kuyruk -->
+                <path d="M 18 17 L 4 2 L 12 2 L 24 17 Z" fill="url(#backWingGrad)" />
+                <path d="M 10 2 L 12 2 L 24 17 L 22 17 Z" fill="#ffffff" opacity="0.4" />
+                <!-- Arka Plan Kanat -->
+                <path d="M 52 19 L 40 34 L 46 34 L 62 19 Z" fill="url(#backWingGrad)" />
+                <!-- Gövde -->
+                <path d="M 12 21 C 8 21, 6 20, 6 17 C 6 15, 8 14, 12 14 L 102 14 C 108 14, 114 15, 116 17 C 118 19, 114 21, 108 21 Z" fill="url(#fuselageGrad)" />
+                <!-- Kokpit Camı -->
+                <path d="M 108 15 C 111 15, 112 15.5, 113 16.5 L 110 17.5 C 109 16.5, 108 15.5, 108 15 Z" fill="#1a237e" />
+                <!-- Yolcu Camları -->
+                <g fill="#37474f" opacity="0.7">
+                    <rect x="25" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="30" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="35" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="40" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="45" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="50" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="55" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="60" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="65" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="70" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="75" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="80" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="85" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="90" y="16.5" width="2" height="1.2" rx="0.5" />
+                    <rect x="95" y="16.5" width="2" height="1.2" rx="0.5" />
+                </g>
+                <!-- Ön Plan Kanat -->
+                <path d="M 58 19 L 45 38 L 52 38 L 72 19 Z" fill="#ffffff" />
+                <path d="M 58 19 L 45 38 L 47 38 L 61 19 Z" fill="#cfd8dc" />
+                <!-- Motor -->
+                <rect x="53" y="23" width="14" height="5" rx="2.5" fill="url(#engineGrad)" />
+                <path d="M 53 24.5 L 51 25.5 L 53 26.5 Z" fill="#ff7043" />
+                <ellipse cx="66.5" cy="25.5" rx="1" ry="2.2" fill="#cfd8dc" />
+            </g>
+        </svg>
+        <span class="plane-explosion" id="plane-explosion" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 45px; z-index: 10; pointer-events: none;">💥</span>
+    </div>
+</div>
+
+<div class="ocean" id="ocean">
+    <div class="wave w1"></div>
+    <div class="wave w2"></div>
+    <div class="wave w3"></div>
+    <div class="wave w4"></div>
+    <div class="wave w5"></div>
+    <div class="wave w6"></div>
+</div>
+<div class="beach">
+    <div class="beach-item" style="left: 5%; bottom: 12%; font-size: 50px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 12%; bottom: 22%; font-size: 45px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 18%; bottom: 8%; font-size: 60px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 25%; bottom: 18%; font-size: 55px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 32%; bottom: 25%; font-size: 40px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 38%; bottom: 10%; font-size: 65px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="left: 45%; bottom: 20%; font-size: 50px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 5%; bottom: 15%; font-size: 55px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 12%; bottom: 8%; font-size: 65px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 19%; bottom: 24%; font-size: 45px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 26%; bottom: 12%; font-size: 60px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 33%; bottom: 20%; font-size: 50px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 42%; bottom: 15%; font-size: 55px;"><span class="umbrella">⛱️</span></div>
+    <div class="beach-item" style="right: 48%; bottom: 26%; font-size: 40px; transform: scaleX(-1);"><span class="umbrella">⛱️</span></div>
+</div>
+
+<div class="palm-tree palm-1">🌴</div>
+<div class="palm-tree palm-2">🌴</div>
+<div class="palm-tree palm-3">🌴</div>
+<div class="palm-tree palm-4">🌴</div>
+<div class="palm-tree palm-5">🌴</div>
+<div class="palm-tree palm-6">🌴</div>
+<div class="palm-tree palm-7">🌴</div>
+
+
+
+<div class="boat-container">
+    <div class="boat-wrapper bw-1"><div class="boat">⛵</div></div>
+    <div class="boat-wrapper bw-2"><div class="boat">⛵</div></div>
+    <div class="boat-wrapper bw-3"><div class="boat">⛵</div></div>
+    <div class="boat-wrapper bw-4"><div class="boat">⛵</div></div>
+</div>
+
+<div class="birds-container">
+    <!-- Kuş 1 -->
+    <div class="bird">
+        <svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+            <path class="wing left-wing" d="M 30 20 C 27 10, 18 2, 8 2 C 16 7, 24 14, 30 20 Z" fill="#ffffff" />
+            <path d="M 12 20 Q 30 15 48 20 Q 30 25 12 20 Z" fill="#ffffff" />
+            <path d="M 12 20 L 2 15 L 2 25 Z" fill="#ffffff" />
+            <path class="wing right-wing" d="M 30 20 C 27 30, 18 38, 8 38 C 16 33, 24 26, 30 20 Z" fill="#ffffff" />
+        </svg>
+    </div>
+    <!-- Kuş 2 -->
+    <div class="bird">
+        <svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+            <path class="wing left-wing" d="M 30 20 C 27 10, 18 2, 8 2 C 16 7, 24 14, 30 20 Z" fill="#ffffff" />
+            <path d="M 12 20 Q 30 15 48 20 Q 30 25 12 20 Z" fill="#ffffff" />
+            <path d="M 12 20 L 2 15 L 2 25 Z" fill="#ffffff" />
+            <path class="wing right-wing" d="M 30 20 C 27 30, 18 38, 8 38 C 16 33, 24 26, 30 20 Z" fill="#ffffff" />
+        </svg>
+    </div>
+    <!-- Kuş 3 -->
+    <div class="bird">
+        <svg viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+            <path class="wing left-wing" d="M 30 20 C 27 10, 18 2, 8 2 C 16 7, 24 14, 30 20 Z" fill="#ffffff" />
+            <path d="M 12 20 Q 30 15 48 20 Q 30 25 12 20 Z" fill="#ffffff" />
+            <path d="M 12 20 L 2 15 L 2 25 Z" fill="#ffffff" />
+            <path class="wing right-wing" d="M 30 20 C 27 30, 18 38, 8 38 C 16 33, 24 26, 30 20 Z" fill="#ffffff" />
+        </svg>
+    </div>
+</div>
+
+<canvas id="ripple-layer"></canvas>
+<div id="network-container"></div>
+<div id="detail-panel">
+    <button class="close-btn" onclick="closePanel()">X</button>
+    <h2 id="panel-title">Başlık</h2>
+    <div id="panel-content">İçerik burada görünecek.</div>
+</div>
+
+<script>
+// Kenar bitkilerini oluştur 
+function createBushes() {
+    const body = document.body;
+    const types = ['🌿']; 
+    const countPerSide = 35; // 35 sol, 35 sağ
+    
+    for (let i = 0; i < countPerSide * 2; i++) { 
+        let bush = document.createElement('div');
+        bush.className = 'bush';
+        
+        let size = Math.random() * 70 + 60; // 60px ile 130px arası
+        bush.style.fontSize = size + 'px';
+        bush.innerText = types[0];
+        
+        // Boşluk kalmasını önlemek için her kenarı 35 eşit dikey bölüme ayırıyoruz (Stratified sampling)
+        const sideIndex = i < countPerSide ? i : i - countPerSide;
+        // Dikey yerleşimi -5% ile 105% arasına eşit yayıyoruz
+        const baseBottom = -5 + (sideIndex / (countPerSide - 1)) * 110;
+        // Doğallık katmak için lokal kayma (jitter) ekliyoruz
+        const jitter = (Math.random() - 0.5) * (110 / countPerSide) * 1.5;
+        let bottomPercent = baseBottom + jitter;
+        
+        // Ekrana uygun sınırlar içinde kalmasını garanti altına alıyoruz
+        bottomPercent = Math.max(-10, Math.min(115, bottomPercent));
+        bush.style.bottom = bottomPercent + '%';
+        
+        // Renk tonu çeşitliliği (Yeşil tonları: -25deg ile +25deg arası)
+        bush.style.setProperty('--h', (Math.random() * 50 - 25) + 'deg');
+        // Parlaklık çeşitliliği: 0.7 ile 1.25 arası
+        bush.style.setProperty('--b', (Math.random() * 0.55 + 0.7));
+        // Doygunluk çeşitliliği: 0.75 ile 1.3 arası
+        bush.style.setProperty('--s', (Math.random() * 0.55 + 0.75));
+        
+        bush.style.transformOrigin = "bottom center";
+        
+        if (i < countPerSide) { // Sol kenar
+            bush.style.left = -(size * 1.0) + 'px'; 
+            bush.style.transform = `rotate(${Math.random() * 30 + 50}deg)`; 
+        } else { // Sağ kenar
+            bush.style.right = -(size * 1.0) + 'px'; 
+            bush.style.transform = `rotate(-${Math.random() * 30 + 50}deg)`; 
+        }
+        body.appendChild(bush);
+    }
+}
+createBushes();
+
+// Karşı adanın dikey tepe sınırını hesaplayan yumuşak geçiş fonksiyonu
+function getIslandTopY(x) {
+    if (x < 90 || x > 410) return 120;
+    let y = 120;
+    if (x < 160) {
+        let t = (x - 90) / (160 - 90);
+        y = 120 - 40 * (3*t*t - 2*t*t*t); // soldan birinci tepe
+    } else if (x < 230) {
+        let t = (x - 160) / (230 - 160);
+        y = 80 + 25 * (3*t*t - 2*t*t*t);  // birinci vadi
+    } else if (x < 290) {
+        let t = (x - 230) / (290 - 230);
+        y = 105 - 17 * (3*t*t - 2*t*t*t); // sağdan ikinci tepe
+    } else {
+        let t = (x - 290) / (410 - 290);
+        y = 88 + 32 * (3*t*t - 2*t*t*t);  // sağ kenar bitiş
+    }
+    return y;
+}
+
+// Karşı adaya sık, doğal ve boşluksuz yerleşimli palmiyeler yerleştirir (Dart Throwing / Poisson Disk)
+function generateIslandTrees() {
+    const forest = document.getElementById('palm-forest');
+    if (!forest) return;
+    
+    const trees = [];
+    const minX = 94;
+    const maxX = 406;
+    const yBottom = 117.5;
+    
+    // Doğal bir orman dağılımı için rastgele noktalar fırlatıyoruz (Dart Throwing)
+    // Belirli bir mesafe kuralıyla ağaçların üst üste binip yapay çizgiler veya boşluklar oluşturmasını engelliyoruz
+    const maxAttempts = 15000;
+    
+    for (let i = 0; i < maxAttempts; i++) {
+        const x = Math.random() * (maxX - minX) + minX;
+        const yTop = getIslandTopY(x);
+        
+        if (yTop >= yBottom) continue;
+        const y = Math.random() * (yBottom - yTop) + yTop;
+        
+        // Mesafe kontrolü (Yatayda en az 2.4, dikeyde en az 1.0 birim mesafe)
+        // Bu kural ağaçların ne dikey çizgiler halinde dizilmesini ne de boşluk kalmasını sağlar
+        let tooClose = false;
+        for (let j = 0; j < trees.length; j++) {
+            const other = trees[j];
+            const dx = Math.abs(x - other.x);
+            const dy = Math.abs(y - other.y);
+            
+            if (dx < 2.4 && dy < 1.0) {
+                tooClose = true;
+                break;
+            }
+        }
+        
+        if (!tooClose) {
+            trees.push({ x, y });
+        }
+    }
+    
+    // Derinlik hissi (Doğru üst üste binme) için arkadan öne (Y'ye göre küçükten büyüğe) sıralama
+    trees.sort((a, b) => a.y - b.y);
+    
+    let svgContent = '';
+    trees.forEach(tree => {
+        const type = Math.random() < 0.5 ? 'palm1' : 'palm2';
+        const scale = 0.045 + (tree.y - 90) * 0.0017;
+        const opacity = 0.75 + (tree.y - 90) * (0.2 / 30);
+        
+        // Ağaçların eğimlerini hafifçe artırıyoruz (-9 ila +9 derece arası rastgele eğim)
+        // Ağaçların kök noktasından (5, 40) dönmesi için rotate(açı, 5, 40) kullanıyoruz
+        const angle = (Math.random() - 0.5) * 18;
+        
+        svgContent += `<use href="#${type}" transform="translate(${tree.x.toFixed(1)}, ${tree.y.toFixed(1)}) scale(${scale.toFixed(4)}) rotate(${angle.toFixed(1)}, 5, 40)" opacity="${opacity.toFixed(2)}" />`;
+    });
+    
+    forest.innerHTML = svgContent;
+}
+generateIslandTrees();
+
+
+
+const ocean = document.getElementById('ocean');
+for(let i=0; i<30; i++) {
+    let sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    sparkle.style.left = Math.random() * 100 + '%';
+    sparkle.style.top = Math.random() * 100 + '%';
+    sparkle.style.animationDelay = (Math.random() * 3) + 's';
+    ocean.appendChild(sparkle);
+}
+
+const blobPaths = [
+    "M 45 5 C 75 -5 105 25 95 55 C 85 85 60 100 35 90 C 5 75 -5 45 15 20 C 25 5 35 10 45 5 Z",
+    "M 55 10 C 85 5 95 40 85 65 C 70 95 30 95 15 70 C -5 40 15 5 40 10 C 45 10 50 12 55 10 Z",
+    "M 40 10 C 65 -5 95 15 90 45 C 85 80 55 95 30 85 C 0 70 -5 35 15 15 C 25 5 35 15 40 10 Z",
+    "M 50 5 C 80 0 100 25 95 55 C 90 90 60 100 35 90 C 5 80 0 45 20 20 C 30 5 40 10 50 5 Z"
+];
+
+function createWaterDropURL(label, baseColor, isSmallBubble = false) {
+    const safeLabel = label.replace(/&/g, "&amp;");
+    const lines = safeLabel.split('\n');
+    let textHtml = '';
+    const fontSize = 13.5;
+    
+    if (!isSmallBubble) {
+        const startY = 50 - ((lines.length - 1) * (fontSize + 4.5)) / 2;
+        lines.forEach((line, index) => {
+            const y = startY + index * (fontSize + 4.5);
+            textHtml += `<tspan x="50" y="${y}">${line}</tspan>`;
+        });
+    }
+
+    const randomPath = blobPaths[Math.floor(Math.random() * blobPaths.length)];
+
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100">
+    <defs>
+    <radialGradient id="grad" cx="35%" cy="35%" r="70%">
+    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.80"/>
+    <stop offset="45%" stop-color="${baseColor}" stop-opacity="0.35"/>
+    <stop offset="100%" stop-color="${baseColor}" stop-opacity="0.65"/>
+    </radialGradient>
+    <filter id="shadow">
+    <feDropShadow dx="0" dy="8" stdDeviation="4" flood-color="#002244" flood-opacity="0.15"/>
+    </filter>
+    </defs>
+    <path d="${randomPath}" fill="url(#grad)" filter="url(#shadow)"/>
+    <ellipse cx="30" cy="20" rx="20" ry="7" fill="#ffffff" transform="rotate(-30 30 20)" opacity="0.35"/>
+    <ellipse cx="75" cy="65" rx="8" ry="4" fill="#ffffff" transform="rotate(-30 75 65)" opacity="0.15"/>
+    <path d="M 30 85 C 50 90 70 85 80 75 C 60 85 40 85 20 75 C 25 80 27 82 30 85 Z" fill="#ffffff" opacity="0.2"/>
+    <text font-family="'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif" font-size="${fontSize}" font-weight="850" fill="#002244" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round" paint-order="stroke fill" text-anchor="middle" dominant-baseline="middle">${textHtml}
+    </text>
+    </svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+const rawNodes = [
+{ id: 1, label: 'Ben Kimim ?', baseColor: '#00d4ff', size: 90, info: "Merhaba ben Muhammet Emir Uzun. Balıkesir Üniversitesi Bilgisayar Mühendisliği 2. sınıf öğrencisiyim. Sizleri sitemde eğlenceye davet ediyorum. Keşfetmeye hazır mısınız ?" },
+{ id: 2, label: 'İlgi\nAlanları', baseColor: '#5ce1e6', size: 60, info: "Boş vakitlerimde zihnimi tazelediğim ve odaklandığım aktiviteler." },
+{ id: 3, label: 'Teknik\nBeceriler', baseColor: '#38ef7d', size: 60, info: "Mühendislik uygulamalarındaki prosedürlere hakimim. Büyük projelere uygunum." },
+{ id: 9, label: 'Yabancı\nDil', baseColor: '#ffd933', size: 60, info: "C1-C2 seviye İngilizcem bulunuyor. Ayrıca Rusça ve Çince'ye meraklıyım." },
+{ id: 4, label: 'Gitar', baseColor: '#7afcff', size: 45, info: "Müzikle uğraşmak, özellikle gitar çalmak günün stresini atmamı sağlıyor." },
+{ id: 5, label: 'E-Spor', baseColor: '#7afcff', size: 45, info: "Özellikle CS2 ve CS 1.6'da rekabetçi arenada yer almayı seviyorum. Gecikme süreleri ve performans optimizasyonları benim için önemli." },
+{ id: 6, label: 'Hiking', baseColor: '#7afcff', size: 45, info: "Doğada yürüyüş yapmak, temiz hava almak ve hareket halinde olmak enerjimi yeniliyor." },
+{ id: 10, label: 'Satranç', baseColor: '#7afcff', size: 45, info: "Satranç oynamayı severim" },
+{ id: 7, label: 'Yazılım', baseColor: '#a8ff78', size: 45, info: "Güçlü C# ve Python hakimiyetim bulunuyor. Yeni teknolojileri öğrenmeye hevesliyim." },
+{ id: 8, label: 'Donanım', baseColor: '#a8ff78', size: 45, info: "Tinkercad ve Proteus gibi simülasyon araçlarıyla Full Adder (Tam Toplayıcı) ve dijital mantık devreleri tasarlıyorum." },
+{ id: 11, label: 'Hedeflerim', baseColor: '#ff9a9e', size: 60, info: "Şuanki en büyük hedefim Hawaii'ye gitmektir" },
+{ id: 12, label: 'Mutfak', baseColor: '#7afcff', size: 45, info: "Mutfakla aram çok mükemmeldir. Dünya mutfağına hakimim. El becerisi olarak fırın işlerinde iyiyimdir. Pizza, pide gibi ürünleri rahatlıkla çıkartabilirim" },
+{ id: 13, label: 'İletişim', baseColor: '#a29bfe', size: 60, info: "Telefon Numaram : 0 541 601 70 33\nİnstagram : emir.uzun.n\nLinkedin : https://www.linkedin.com/in/emiruzunn/" }
+];
+
+let edgesArray = [
+{ from: 1, to: 2 }, { from: 1, to: 3 }, { from: 1, to: 9 }, { from: 1, to: 11 }, { from: 1, to: 13 },
+{ from: 2, to: 4 }, { from: 2, to: 5 }, { from: 2, to: 6 }, { from: 2, to: 10 }, { from: 2, to: 12 },
+{ from: 3, to: 7 }, { from: 3, to: 8 }
+];
+
+const BUBBLE_COUNT = 15;
+for (let i = 100; i < 100 + BUBBLE_COUNT; i++) {
+    const randomColor = ['#00b4db', '#5ce1e6', '#ffffff', '#ffd933', '#38ef7d'][Math.floor(Math.random()*5)];
+    rawNodes.push({id: i, label: '', baseColor: randomColor, size: Math.random() * 15 + 10,info: "Sadece etrafta süzülen bir fikir baloncuğu...",isSmallBubble: true
+    });
+}
+
+const processedNodes = rawNodes.map(node => ({
+    id: node.id, shape: 'image',
+    image: createWaterDropURL(node.label, node.baseColor, node.isSmallBubble),
+    size: node.size, info: node.info, rawLabel: node.label, isBubble: node.isSmallBubble
+}));
+
+const nodes = new vis.DataSet(processedNodes);
+
+const processedEdges = edgesArray.map(edge => ({
+...edge, width: 2,color: { 
+    color: 'rgba(255, 255, 255, 0.5)', 
+    highlight: 'rgba(255, 255, 255, 0.9)',
+    hover: '#40E0D0' 
+},shadow: { enabled: true, color: 'rgba(0, 100, 200, 0.2)', size: 4, x: 1, y: 2 },smooth: { type: 'continuous', roundness: 0.5 }
+}));
+
+const edges = new vis.DataSet(processedEdges);
+const container = document.getElementById('network-container');
+const data = { nodes: nodes, edges: edges };
+const options = {
+physics: {
+forceAtlas2Based: { gravitationalConstant: -150, centralGravity: 0.01, springLength: 180, springConstant: 0.05 },
+maxVelocity: 50,
+minVelocity: 0.01,
+solver: 'forceAtlas2Based',
+timestep: 0.35,
+stabilization: false
+},
+interaction: {
+hover: true,
+zoomView: false,
+dragView: false,
+hoverConnectedEdges: true
+}
+};
+
+const network = new vis.Network(container, data, options);
+
+setInterval(() => {
+const positions = network.getPositions();
+const currentNodes = network.body.nodes;
+const scale = network.getScale();
+const LIMIT_X = (window.innerWidth / 2) / scale - 90;
+const LIMIT_Y = (window.innerHeight / 2) / scale - 90;
+Object.keys(positions).forEach(id => {
+let node = currentNodes[id];
+if (node && node.velocity) {
+node.velocity.x += (Math.random() - 0.5) * 3;
+node.velocity.y += (Math.random() - 0.5) * 3;
+let px = node.x;
+let py = node.y;
+let outOfBounds = false;
+if (px > LIMIT_X) { px = LIMIT_X; node.velocity.x = -Math.abs(node.velocity.x) - 5; outOfBounds = true; }
+if (px < -LIMIT_X) { px = -LIMIT_X; node.velocity.x = Math.abs(node.velocity.x) + 5; outOfBounds = true; }
+if (py > LIMIT_Y) { py = LIMIT_Y; node.velocity.y = -Math.abs(node.velocity.y) - 5; outOfBounds = true; }
+if (py < -LIMIT_Y) { py = -LIMIT_Y; node.velocity.y = Math.abs(node.velocity.y) + 5; outOfBounds = true; }
+if (outOfBounds) { network.moveNode(id, px, py); }
+}
+});
+}, 100);
+
+const rippleCanvas = document.getElementById('ripple-layer');
+const ctx = rippleCanvas.getContext('2d');
+let ripples = [];
+let isHoveringNode = false;
+function resizeCanvas() {
+rippleCanvas.width = window.innerWidth;
+rippleCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+network.on("hoverNode", () => isHoveringNode = true);
+network.on("blurNode", () => isHoveringNode = false);
+
+window.addEventListener('mousemove', (e) => {
+if (!isHoveringNode && Math.random() > 0.4) {
+ripples.push({ x: e.clientX, y: e.clientY, radius: 2, alpha: 0.6 });
+}
+
+// Arkada kalan etkileşimli elemanların üzerinde cursor pointer yapmak için
+const elements = document.elementsFromPoint(e.clientX, e.clientY);
+const hasInteractive = elements.some(el => 
+    el.classList.contains('boat-wrapper') || 
+    el.id === 'airplane-container' ||
+    el.classList.contains('airplane-body')
+);
+if (hasInteractive || isHoveringNode) {
+    container.style.cursor = 'pointer';
+} else {
+    container.style.cursor = 'default';
+}
+});
+
+function drawRipples() {
+ctx.clearRect(0, 0, rippleCanvas.width, rippleCanvas.height);
+for(let i = 0; i < ripples.length; i++) {
+let r = ripples[i];
+ctx.beginPath();
+ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+ctx.strokeStyle = `rgba(255, 255, 255, ${r.alpha})`;
+ctx.lineWidth = 3;
+ctx.stroke();
+r.radius += 2.5;
+r.alpha -= 0.015;
+}
+ripples = ripples.filter(r => r.alpha > 0);
+requestAnimationFrame(drawRipples);
+}
+drawRipples();
+
+network.on("click", function (params) {
+if (params.nodes.length > 0) {
+const nodeId = params.nodes[0];
+const nodeData = nodes.get(nodeId);
+if (nodeData.isBubble) {
+    playPopSound();
+    nodes.remove(nodeId);
+    
+    // Meydan okuma aktifse skoru arttır
+    incrementChallengeScore();
+    
+    setTimeout(() => {
+        const randomColor = ['#00b4db', '#5ce1e6', '#ffffff', '#ffd933', '#38ef7d'][Math.floor(Math.random()*5)];
+        const randomId = Math.floor(Math.random() * 10000) + 1000;
+        
+        const scale = network.getScale();
+        const limitX = (window.innerWidth / 2) / scale - 120;
+        const limitY = (window.innerHeight / 2) / scale - 120;
+        const rx = (Math.random() - 0.5) * 2 * limitX;
+        const ry = (Math.random() - 0.5) * 2 * limitY;
+        
+        nodes.add({
+            id: randomId,
+            shape: 'image',
+            image: createWaterDropURL('', randomColor, true),
+            size: Math.random() * 15 + 10,
+            x: rx,
+            y: ry,
+            info: "Sadece etrafta süzülen bir fikir baloncuğu...",
+            rawLabel: '',
+            isBubble: true
+        });
+    }, 3000);
+    return;
+}
+document.getElementById('panel-title').innerText = nodeData.rawLabel.replace('\n', ' ');
+document.getElementById('panel-content').innerText = nodeData.info;
+document.getElementById('detail-panel').classList.add('active');
+} else {
+    // Tıklanan yer boşluk ise arkasındaki tekne ve uçağa tıklamayı ilet (z-index arkasında oldukları için)
+    const event = params.event ? params.event.srcEvent : null;
+    if (event) {
+        const x = event.clientX;
+        const y = event.clientY;
+        const elements = document.elementsFromPoint(x, y);
+        for (let el of elements) {
+            if (el.classList.contains('boat-wrapper')) {
+                el.click();
+                break;
+            }
+            if (el.id === 'airplane-container' || el.classList.contains('airplane-body')) {
+                document.getElementById('airplane-container').click();
+                break;
+            }
+        }
+    }
+    closePanel();
+}
+});
+
+function closePanel() {
+    document.getElementById('detail-panel').classList.remove('active');
+}
+
+// Arka Plan Müzik Kontrolü
+const bgMusic = document.getElementById('bg-music');
+const musicControl = document.getElementById('music-control');
+
+// Meydan Okuma Müziği
+const challengeMusic = new Audio('oyun.mp3');
+challengeMusic.loop = true;
+challengeMusic.preload = "auto";
+
+// Aktif çalan sesi döndürür
+function getActiveAudio() {
+    return isChallengeActive ? challengeMusic : bgMusic;
+}
+
+// Fade out helper
+function fadeOut(audio, duration = 800) {
+    return new Promise((resolve) => {
+        if (!audio || audio.paused) {
+            resolve();
+            return;
+        }
+        const startVolume = audio.volume;
+        const steps = 20;
+        const stepTime = duration / steps;
+        const stepVol = startVolume / steps;
+        let currentStep = 0;
+        
+        const interval = setInterval(() => {
+            currentStep++;
+            if (audio.volume > stepVol) {
+                audio.volume -= stepVol;
+            } else {
+                audio.volume = 0;
+            }
+            
+            if (currentStep >= steps) {
+                audio.pause();
+                audio.volume = startVolume; // Restore original volume reference
+                clearInterval(interval);
+                resolve();
+            }
+        }, stepTime);
+    });
+}
+
+// Fade in helper
+function fadeIn(audio, duration = 800, targetVolume = 1.0) {
+    return new Promise((resolve) => {
+        if (!audio) {
+            resolve();
+            return;
+        }
+        audio.volume = 0;
+        audio.play().then(() => {
+            const steps = 20;
+            const stepTime = duration / steps;
+            const stepVol = targetVolume / steps;
+            let currentStep = 0;
+            
+            const interval = setInterval(() => {
+                currentStep++;
+                if (audio.volume < targetVolume - stepVol) {
+                    audio.volume += stepVol;
+                } else {
+                    audio.volume = targetVolume;
+                }
+                
+                if (currentStep >= steps) {
+                    audio.volume = targetVolume;
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, stepTime);
+        }).catch(err => {
+            console.log("Audio fade-in failed:", err);
+            resolve();
+        });
+    });
+}
+
+function toggleMusic(event) {
+    if (event) event.stopPropagation();
+    const activeAudio = getActiveAudio();
+    if (activeAudio.paused) {
+        activeAudio.play().then(() => {
+            musicControl.classList.add('playing');
+        }).catch(err => {
+            console.log("Müzik oynatılamadı:", err);
+        });
+    } else {
+        activeAudio.pause();
+        musicControl.classList.remove('playing');
+    }
+}
+
+// Müzik oynatmayı tetikleyen ve UI senkronize eden ana fonksiyon
+let musicStarted = false;
+function startMusic() {
+    if (musicStarted) return;
+    
+    bgMusic.play().then(() => {
+        musicControl.classList.add('playing');
+        musicStarted = true;
+        // Tetikleyicileri temizle
+        document.removeEventListener('click', startMusic);
+        document.removeEventListener('keydown', startMusic);
+        document.removeEventListener('touchstart', startMusic);
+    }).catch(err => {
+        // Autoplay engeli varsa sessizce bekle, etkileşim tetikleyecektir
+    });
+}
+
+// 1. Doğrudan çalmayı dene
+startMusic();
+
+// 2. Sayfa tamamen yüklendiğinde dene
+window.addEventListener('load', startMusic);
+
+// 3. Tarayıcı autoplay engeline takılırsa ilk kullanıcı etkileşiminde çal
+document.addEventListener('click', startMusic);
+document.addEventListener('keydown', startMusic);
+document.addEventListener('touchstart', startMusic);
+
+// Oyun Ses Efektleri
+
+function playPopSound() {
+    const snd = new Audio('su.mp3');
+    snd.play().catch(e => console.log("su.mp3 oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
+}
+
+function playExplosionSound() {
+    const snd = new Audio('patlama.mp3');
+    snd.play().catch(e => console.log("patlama.mp3 oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
+}
+
+let audioCtx = null;
+// Dönüm noktası (Milestone) müzik ve kelime gösterimi
+function playMilestoneSound(score) {
+    const audioFile = `${score / 10}.mp3`; // 1.mp3, 2.mp3, 3.mp3, 4.mp3, 5.mp3, 6.mp3, 7.mp3
+    const milestoneAudio = new Audio(audioFile);
+    
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const source = audioCtx.createMediaElementSource(milestoneAudio);
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 2.0; // Ses seviyesini 2 katına çıkar
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        milestoneAudio.onended = () => {
+            source.disconnect();
+            gainNode.disconnect();
+        };
+    } catch (e) {
+        console.log("Web Audio API yükseltme hatası (varsayılan ses seviyesi ile çalınıyor):", e);
+    }
+    
+    milestoneAudio.play().catch(e => console.log(`${audioFile} oynatılamadı:`, e));
+    
+    // Kelimeler 1.mp3'ten 7.mp3'e sırasıyla
+    const words = {
+        10: "PERFECT!",
+        20: "AMAZING!",
+        30: "AWESOME!",
+        40: "GOOD!",
+        50: "PERFECT!",
+        60: "HELL YEAH !",
+        70: "HU HUU"
+    };
+    showEnergeticWord(words[score]);
+}
+
+function showEnergeticWord(wordText) {
+    const el = document.createElement('div');
+    el.className = 'milestone-popup';
+    el.innerText = wordText;
+    
+    document.body.appendChild(el);
+    
+    // Animasyon bitiminde elementi kaldır
+    setTimeout(() => {
+        el.remove();
+    }, 1800);
+}
+
+// Meydan okuma skoru artırma ve kontrolü
+function incrementChallengeScore() {
+    if (!isChallengeActive) return;
+    challengeScore++;
+    document.getElementById('challenge-score').innerText = challengeScore;
+    
+    // 10, 20, 30, 40, 50, 60, 70 puanlarda özel müzik ve kelime göster
+    if ([10, 20, 30, 40, 50, 60, 70].includes(challengeScore)) {
+        playMilestoneSound(challengeScore);
+    }
+}
+
+async function playChallengeMusic() {
+    if (musicStarted && !bgMusic.paused) {
+        await fadeOut(bgMusic, 800);
+        await fadeIn(challengeMusic, 800);
+    } else {
+        await fadeIn(challengeMusic, 800);
+    }
+    musicControl.classList.add('playing');
+    musicStarted = true;
+}
+
+async function stopChallengeMusic() {
+    await fadeOut(challengeMusic, 800);
+    bgMusic.currentTime = 0; // Ana müziği en baştan başlat
+    await fadeIn(bgMusic, 800);
+    musicControl.classList.add('playing');
+}
+
+function initGameInteractions() {
+    // 1. Tekneler Etkileşimi
+    document.querySelectorAll('.boat-wrapper').forEach((wrapper) => {
+        const boatEl = wrapper.querySelector('.boat');
+        if (!boatEl) return;
+        
+        wrapper.addEventListener('click', (e) => {
+            if (wrapper.classList.contains('sinking')) return;
+            wrapper.classList.add('sinking');
+            
+            playExplosionSound();
+            
+            // Meydan okuma aktifse skoru arttır
+            incrementChallengeScore();
+            
+            // Patlama emojisi
+            boatEl.innerText = '💥';
+            
+            setTimeout(() => {
+                // Suda batma animasyonu başlat
+                boatEl.classList.add('animate-boat-sink');
+            }, 100);
+            
+            setTimeout(() => {
+                // Tekneyi gizle ve sıfırla
+                wrapper.style.display = 'none';
+                wrapper.classList.remove('sinking');
+                boatEl.classList.remove('animate-boat-sink');
+                boatEl.innerText = '⛵';
+                
+                // 5 saniye sonra başlangıç konumundan tekrar doğdur (respawn)
+                setTimeout(() => {
+                    const origAnim = wrapper.style.animation;
+                    wrapper.style.animation = 'none';
+                    wrapper.offsetHeight; // reflow tetikle
+                    wrapper.style.animation = '';
+                    wrapper.style.display = 'block';
+                }, 5000);
+            }, 1000);
+        });
+    });
+
+    // 2. Uçak Etkileşimi
+    const planeContainer = document.getElementById('airplane-container');
+    const planeBody = document.getElementById('airplane-body');
+    const planeExplosion = document.getElementById('plane-explosion');
+    
+    if (planeContainer && planeBody && planeExplosion) {
+        planeContainer.addEventListener('click', (e) => {
+            if (planeContainer.classList.contains('crashing')) return;
+            planeContainer.classList.add('crashing');
+            
+            playExplosionSound();
+            
+            // Meydan okuma aktifse skoru arttır
+            incrementChallengeScore();
+            
+            // Patlama efektini göster
+            planeExplosion.style.display = 'block';
+            
+            setTimeout(() => {
+                // Uçağı düşürme animasyonunu başlat
+                planeBody.classList.add('animate-plane-crash');
+            }, 100);
+            
+            setTimeout(() => {
+                // Uçağı gizle ve sıfırla
+                planeContainer.style.display = 'none';
+                planeContainer.classList.remove('crashing');
+                planeBody.classList.remove('animate-plane-crash');
+                planeExplosion.style.display = 'none';
+                
+                // 8 saniye sonra tekrar uçuşa başla (respawn)
+                setTimeout(() => {
+                    const origAnim = planeContainer.style.animation;
+                    planeContainer.style.animation = 'none';
+                    planeContainer.offsetHeight; // reflow
+                    planeContainer.style.animation = '';
+                    planeContainer.style.display = 'block';
+                }, 8000);
+            }, 1200);
+        });
+    }
+}
+
+// Etkileşimleri sayfa yüklendiğinde başlat
+window.addEventListener('DOMContentLoaded', () => {
+    initGameInteractions();
+});
+
+// Zaten DOM yüklendiyse hemen çalıştır (vis-network vs. asenkron yüklenebildiği için garantiye alıyoruz)
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initGameInteractions();
+}
+
+// ==========================================
+// MEYDAN OKUMA VE REKOR TABLOSU MANTIĞI
+// ==========================================
+let isChallengeActive = false;
+let challengeScore = 0;
+let challengeTimer = 60;
+let timerInterval = null;
+
+// Oyun başlamadan önceki 3 saniyelik geri sayım aracı
+function startCountdown(onComplete) {
+    const el = document.createElement('div');
+    el.className = 'countdown-overlay';
+    document.body.appendChild(el);
+    
+    let count = 3;
+    
+    function tick() {
+        if (count > 0) {
+            el.innerText = count;
+            el.style.animation = 'none';
+            el.offsetHeight; // trigger reflow
+            el.style.animation = 'countdownPop 0.8s ease-in-out forwards';
+            count--;
+            setTimeout(tick, 1000);
+        } else {
+            el.innerText = "BAŞLA!";
+            el.style.animation = 'none';
+            el.offsetHeight; // trigger reflow
+            el.style.animation = 'countdownPop 0.8s ease-in-out forwards';
+            
+            setTimeout(() => {
+                el.remove();
+                onComplete();
+            }, 800);
+        }
+    }
+    
+    tick();
+}
+
+// Meydan okumayı başlat
+function startChallenge() {
+    const startBtn = document.getElementById('start-challenge-btn');
+    if (startBtn) startBtn.disabled = true;
+    
+    startCountdown(() => {
+        isChallengeActive = true;
+        challengeScore = 0;
+        challengeTimer = 60;
+        
+        document.getElementById('challenge-score').innerText = "0";
+        document.getElementById('challenge-timer').innerText = "60";
+        
+        document.getElementById('challenge-idle').style.display = 'none';
+        document.getElementById('challenge-active').style.display = 'block';
+        
+        // Panel'in meydan okuma sırasında kaybolmasını önlemek için force-open ekle
+        document.getElementById('challenge-panel').classList.add('force-open');
+        
+        // Oyun müziğini çal ve ana müziği geçici olarak sustur (Fade Transition)
+        playChallengeMusic();
+        
+        if (startBtn) startBtn.disabled = false;
+        
+        // Geri sayımı başlat
+        timerInterval = setInterval(() => {
+            challengeTimer--;
+            document.getElementById('challenge-timer').innerText = challengeTimer;
+            
+            if (challengeTimer <= 0) {
+                endChallenge();
+            }
+        }, 1000);
+    });
+}
+
+// Meydan okumayı bitir
+function endChallenge() {
+    clearInterval(timerInterval);
+    isChallengeActive = false;
+    
+    document.getElementById('challenge-active').style.display = 'none';
+    document.getElementById('challenge-idle').style.display = 'block';
+    
+    // Oyun müziğini kısarak durdur ve ana müziğe geri dön (Fade Transition)
+    stopChallengeMusic();
+    
+    // İsim girme modalini aç
+    document.getElementById('final-score-display').innerText = challengeScore;
+    
+    // Lider tablosuna girme kontrolü
+    const leaderboard = JSON.parse(localStorage.getItem('bubbleLeaderboard') || "[]");
+    let qualifies = false;
+    if (leaderboard.length < 5) {
+        qualifies = true;
+    } else {
+        const lowestScore = leaderboard[4].score;
+        if (challengeScore > lowestScore) {
+            qualifies = true;
+        }
+    }
+    
+    if (qualifies) {
+        document.getElementById('qualify-section').style.display = 'block';
+        document.getElementById('fail-section').style.display = 'none';
+        document.getElementById('player-name-input').value = "";
+        document.getElementById('modal-error-msg').style.display = 'none';
+    } else {
+        document.getElementById('qualify-section').style.display = 'none';
+        document.getElementById('fail-section').style.display = 'block';
+    }
+    
+    document.getElementById('name-modal').style.display = 'flex';
+}
+
+function closeNameModal() {
+    document.getElementById('name-modal').style.display = 'none';
+    document.getElementById('challenge-panel').classList.remove('force-open');
+}
+
+// Lider tablosunu yükle
+function loadLeaderboard() {
+    const listEl = document.getElementById('leaderboard-list');
+    if (!listEl) return;
+    
+    listEl.innerHTML = "";
+    const leaderboard = JSON.parse(localStorage.getItem('bubbleLeaderboard') || "[]");
+    
+    if (leaderboard.length === 0) {
+        listEl.innerHTML = `<li style="list-style:none; margin-left:-20px; color:rgba(0,51,102,0.6);">Henüz rekor yok</li>`;
+        return;
+    }
+    
+    leaderboard.forEach(entry => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+        li.innerHTML = `${entry.name}: <span>${entry.score} Puan</span>`;
+        listEl.appendChild(li);
+    });
+}
+
+// Rekor gönder
+function submitScore() {
+    const nameInput = document.getElementById('player-name-input');
+    const errorEl = document.getElementById('modal-error-msg');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        alert("Lütfen bir isim girin!");
+        return;
+    }
+    
+    const leaderboard = JSON.parse(localStorage.getItem('bubbleLeaderboard') || "[]");
+    
+    // Benzersiz isim kontrolü (büyük-küçük harf duyarsız)
+    const isDuplicate = leaderboard.some(entry => entry.name.toLowerCase() === name.toLowerCase());
+    
+    if (isDuplicate) {
+        errorEl.style.display = 'block';
+        nameInput.value = "";
+        nameInput.focus();
+        return;
+    }
+    
+    // Yeni skoru ekle
+    leaderboard.push({ name: name, score: challengeScore });
+    
+    // Skorları büyükten küçüğe sırala ve ilk 5'i tut
+    leaderboard.sort((a, b) => b.score - a.score);
+    const topLeaderboard = leaderboard.slice(0, 5);
+    
+    localStorage.setItem('bubbleLeaderboard', JSON.stringify(topLeaderboard));
+    
+    // Tabloyu güncelle ve modali kapat
+    loadLeaderboard();
+    document.getElementById('name-modal').style.display = 'none';
+    
+    // Meydan okuma bittiği ve skor girildiği için force-open'ı kaldırıyoruz
+    document.getElementById('challenge-panel').classList.remove('force-open');
+}
+
+// Sayfa ilk yüklendiğinde rekorları çek
+window.addEventListener('load', loadLeaderboard);
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    loadLeaderboard();
+}
+</script>
+
+<!-- İsim Giriş Modali -->
+<div class="custom-modal" id="name-modal" style="display: none;">
+    <div class="modal-content">
+        <h3 class="modal-title">🏆 Meydan Okuma Bitti!</h3>
+        <p class="modal-text">60 saniyede <span id="final-score-display" style="font-weight: 800; color: #002244;">0</span> puan kazandın!</p>
+        
+        <div id="qualify-section">
+            <p class="modal-text">İsmini rekorlar listesine yazdır:</p>
+            <input type="text" id="player-name-input" class="modal-input" placeholder="İsminiz..." maxlength="15" autocomplete="off" />
+            <div class="modal-error" id="modal-error-msg" style="display: none;">Bu isim zaten listede var. Lütfen başka bir isim yazın.</div>
+            <button class="modal-btn" onclick="submitScore()">Gönder</button>
+        </div>
+        
+        <div id="fail-section" style="display: none;">
+            <p class="modal-text" style="font-size: 1.2rem; font-weight: 800; color: #d32f2f; margin-top: 15px; margin-bottom: 20px;">Listeye giremediniz hahaha!</p>
+            <button class="modal-btn" onclick="closeNameModal()">Tamam</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
