@@ -790,6 +790,64 @@ body {
     color: #002244;
 }
 
+/* Challenge Running Panel Override */
+.game-dashboard.challenge-running {
+    transform: translateX(calc(-100% - 14px)) !important;
+    pointer-events: none !important;
+}
+
+/* Challenge HUD Panel */
+.challenge-hud {
+    position: absolute;
+    top: 30px;
+    left: 100px;
+    height: 54px;
+    padding: 0 22px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 27px;
+    box-shadow: 0 10px 25px rgba(0, 100, 200, 0.15), inset 0 0 10px rgba(255, 255, 255, 0.5);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #003366;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    user-select: none;
+    pointer-events: none;
+    animation: hudSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes hudSlideIn {
+    0% { transform: translateX(-30px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.hud-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.15rem;
+}
+
+.hud-icon {
+    font-size: 1.25rem;
+}
+
+.hud-value {
+    font-weight: 900;
+    color: #002244;
+}
+
+.hud-divider {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(0, 150, 255, 0.3);
+}
+
 /* Custom Modal Styles */
 .custom-modal {
     position: fixed;
@@ -992,6 +1050,19 @@ body {
         <div class="music-bar"></div>
         <div class="music-bar"></div>
         <div class="music-bar"></div>
+    </div>
+</div>
+
+<!-- Meydan Okuma Üst HUD Paneli -->
+<div class="challenge-hud" id="challenge-hud" style="display: none;">
+    <div class="hud-item timer">
+        <span class="hud-icon">⏱️</span>
+        <span class="hud-value" id="hud-timer">60</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-item kills">
+        <span class="hud-icon">💥</span>
+        <span class="hud-value" id="hud-kills">0</span>
     </div>
 </div>
 
@@ -1525,7 +1596,7 @@ const blobPaths = [
     "M 50 5 C 80 0 100 25 95 55 C 90 90 60 100 35 90 C 5 80 0 45 20 20 C 30 5 40 10 50 5 Z"
 ];
 
-function createWaterDropURL(label, baseColor, isSmallBubble = false) {
+function createWaterDropURL(label, baseColor, isSmallBubble = false, globalOpacity = 1.0, pathIndex = null) {
     const safeLabel = label.replace(/&/g, "&amp;");
     const lines = safeLabel.split('\n');
     let textHtml = '';
@@ -1539,10 +1610,11 @@ function createWaterDropURL(label, baseColor, isSmallBubble = false) {
         });
     }
 
-    const randomPath = blobPaths[Math.floor(Math.random() * blobPaths.length)];
+    const idx = pathIndex !== null ? pathIndex : Math.floor(Math.random() * blobPaths.length);
+    const randomPath = blobPaths[idx % blobPaths.length];
 
     const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100">
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 100 100" opacity="${globalOpacity}">
     <defs>
     <radialGradient id="grad" cx="35%" cy="35%" r="70%">
     <stop offset="0%" stop-color="#ffffff" stop-opacity="0.80"/>
@@ -1592,10 +1664,13 @@ for (let i = 100; i < 100 + BUBBLE_COUNT; i++) {
     });
 }
 
-const processedNodes = rawNodes.map(node => ({
+const processedNodes = rawNodes.map((node, idx) => ({
     id: node.id, shape: 'image',
-    image: createWaterDropURL(node.label, node.baseColor, node.isSmallBubble),
-    size: node.size, info: node.info, rawLabel: node.label, isBubble: node.isSmallBubble
+    image: createWaterDropURL(node.label, node.baseColor, node.isSmallBubble, 1.0, idx),
+    size: node.size, info: node.info, rawLabel: node.label, isBubble: node.isSmallBubble,
+    baseColor: node.baseColor,
+    pathIndex: idx,
+    globalOpacity: 1.0
 }));
 
 const nodes = new vis.DataSet(processedNodes);
@@ -1738,6 +1813,7 @@ if (nodeData.isBubble) {
     }, 3000);
     return;
 }
+if (isChallengeActive) return; // Meydan okuma sırasında detay panelini açma
 document.getElementById('panel-title').innerText = nodeData.rawLabel.replace('\n', ' ');
 document.getElementById('panel-content').innerText = nodeData.info;
 document.getElementById('detail-panel').classList.add('active');
@@ -1892,9 +1968,20 @@ document.addEventListener('touchstart', startMusic);
 
 // Oyun Ses Efektleri
 
+let popSoundPool = [];
+
 function playPopSound() {
-    const snd = new Audio('su.mp3');
-    snd.play().catch(e => console.log("su.mp3 oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
+    if (popSoundPool.length === 0) {
+        popSoundPool = ['berat1.mp3', 'berat2.mp3', 'berat3.mp3'];
+        // Fisher-Yates Shuffle ile havuzu karıştır
+        for (let i = popSoundPool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [popSoundPool[i], popSoundPool[j]] = [popSoundPool[j], popSoundPool[i]];
+        }
+    }
+    const soundFile = popSoundPool.pop();
+    const snd = new Audio(soundFile);
+    snd.play().catch(e => console.log(soundFile + " oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
 }
 
 function playExplosionSound() {
@@ -1962,6 +2049,9 @@ function incrementChallengeScore() {
     if (!isChallengeActive) return;
     challengeScore++;
     document.getElementById('challenge-score').innerText = challengeScore;
+    
+    const hudKills = document.getElementById('hud-kills');
+    if (hudKills) hudKills.innerText = challengeScore;
     
     // 10, 20, 30, 40, 50, 60, 70 puanlarda özel müzik ve kelime göster
     if ([10, 20, 30, 40, 50, 60, 70].includes(challengeScore)) {
@@ -2122,6 +2212,51 @@ function startCountdown(onComplete) {
     tick();
 }
 
+// Yazılı balonları yavaşça kaybet/geri getir
+function fadeLabeledNodes(targetOpacity, duration = 800) {
+    const start = performance.now();
+    const labeledNodes = nodes.get({
+        filter: function (item) {
+            return !item.isBubble;
+        }
+    });
+    
+    const initialOpacities = {};
+    labeledNodes.forEach(n => {
+        initialOpacities[n.id] = n.globalOpacity !== undefined ? n.globalOpacity : 1.0;
+    });
+    
+    function step(timestamp) {
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const updates = [];
+        labeledNodes.forEach(n => {
+            const startOpacity = initialOpacities[n.id];
+            const currentOpacity = startOpacity + (targetOpacity - startOpacity) * progress;
+            
+            n.globalOpacity = currentOpacity;
+            n.image = createWaterDropURL(n.rawLabel, n.baseColor, false, currentOpacity, n.pathIndex);
+            
+            if (targetOpacity === 0 && progress === 1) {
+                n.hidden = true;
+            } else if (targetOpacity > 0) {
+                n.hidden = false;
+            }
+            
+            updates.push(n);
+        });
+        
+        nodes.update(updates);
+        
+        if (progress < 1) {
+            requestAnimationFrame(step);
+        }
+    }
+    
+    requestAnimationFrame(step);
+}
+
 // Meydan okumayı başlat
 function startChallenge() {
     const startBtn = document.getElementById('start-challenge-btn');
@@ -2138,8 +2273,21 @@ function startChallenge() {
         document.getElementById('challenge-idle').style.display = 'none';
         document.getElementById('challenge-active').style.display = 'block';
         
-        // Panel'in meydan okuma sırasında kaybolmasını önlemek için force-open ekle
-        document.getElementById('challenge-panel').classList.add('force-open');
+        // Panel'i meydan okuma sırasında kaybolması için challenge-running sınıfını ekle, force-open'ı kaldır
+        const panel = document.getElementById('challenge-panel');
+        panel.classList.remove('force-open');
+        panel.classList.add('challenge-running');
+        
+        // Sol üst HUD panelini göster ve sıfırla
+        const hud = document.getElementById('challenge-hud');
+        if (hud) {
+            hud.style.display = 'flex';
+            document.getElementById('hud-timer').innerText = "60";
+            document.getElementById('hud-kills').innerText = "0";
+        }
+        
+        // Yazılı balonları yavaşça kaybet
+        fadeLabeledNodes(0, 1000);
         
         // Oyun müziğini çal ve ana müziği geçici olarak sustur (Fade Transition)
         playChallengeMusic();
@@ -2150,6 +2298,9 @@ function startChallenge() {
         timerInterval = setInterval(() => {
             challengeTimer--;
             document.getElementById('challenge-timer').innerText = challengeTimer;
+            
+            const hudTimer = document.getElementById('hud-timer');
+            if (hudTimer) hudTimer.innerText = challengeTimer;
             
             if (challengeTimer <= 0) {
                 endChallenge();
@@ -2165,6 +2316,18 @@ function endChallenge() {
     
     document.getElementById('challenge-active').style.display = 'none';
     document.getElementById('challenge-idle').style.display = 'block';
+    
+    // Sol üst HUD panelini gizle
+    const hud = document.getElementById('challenge-hud');
+    if (hud) hud.style.display = 'none';
+    
+    // Panelin gizliliğini kaldır ve tekrar görünür yap
+    const panel = document.getElementById('challenge-panel');
+    panel.classList.remove('challenge-running');
+    panel.classList.add('force-open');
+    
+    // Yazılı balonları yavaşça geri getir
+    fadeLabeledNodes(1, 1000);
     
     // Oyun müziğini kısarak durdur ve ana müziğe geri dön (Fade Transition)
     stopChallengeMusic();
