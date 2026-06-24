@@ -539,7 +539,7 @@ body {
 /* Bilgi Paneli */
 #detail-panel {
     position: absolute;
-    top: 30px;
+    top: 90px;
     right: 30px;
     width: 340px;
     padding: 25px;
@@ -553,6 +553,49 @@ body {
     transform: translateX(130%);
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     color: #003366;
+}
+
+/* Dil Seçimi Butonları */
+.language-switcher {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+.lang-btn {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 100, 200, 0.15), inset 0 0 10px rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #002244;
+    text-transform: uppercase;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s, background 0.3s, color 0.3s;
+}
+.lang-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 30px rgba(0, 100, 200, 0.25);
+}
+.lang-btn:active {
+    transform: scale(0.95);
+}
+.lang-btn.active {
+    background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 25px rgba(0, 180, 219, 0.3);
 }
 
 #detail-panel.active { transform: translateX(0); }
@@ -1069,6 +1112,12 @@ body {
 </style>
 </head>
 <body>
+<!-- Dil Seçimi Butonları -->
+<div class="language-switcher">
+    <div class="lang-btn active" id="lang-tr" onclick="changeLanguage('tr')" title="Türkçe">TR</div>
+    <div class="lang-btn" id="lang-en" onclick="changeLanguage('en')" title="English">EN</div>
+</div>
+
 <!-- Arka Plan Müziği -->
 <audio id="bg-music" autoplay loop preload="auto">
     <source src="muzik.mp3" type="audio/mp3">
@@ -1669,20 +1718,229 @@ function createWaterDropURL(label, baseColor, isSmallBubble = false, globalOpaci
     return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 
+let currentLanguage = localStorage.getItem('selectedLanguage') || 'tr';
+
+const nodeTranslations = {
+    tr: {
+        1: { label: 'Ben Kimim ?', info: "Merhaba ben Muhammet Emir Uzun. Balıkesir Üniversitesi Bilgisayar Mühendisliği 2. sınıf öğrencisiyim. Sizleri sitemde eğlenceye davet ediyorum. Keşfetmeye hazır mısınız ?" },
+        2: { label: 'İlgi\nAlanları', info: "Boş vakitlerimde zihnimi tazelediğim ve odaklandığım aktiviteler." },
+        3: { label: 'Teknik\nBeceriler', info: "Mühendislik uygulamalarındaki prosedürlere hakimim. Büyük projelere uygunum." },
+        4: { label: 'Gitar', info: "Müzikle uğraşmak, özellikle gitar çalmak günün stresini atmamı sağlıyor." },
+        5: { label: 'E-Spor', info: "Özellikle CS2 ve CS 1.6'da rekabetçi arenada yer almayı seviyorum. Gecikme süreleri ve performans optimizasyonları benim için önemli." },
+        6: { label: 'Hiking', info: "Doğada yürüyüş yapmak, temiz hava almak ve hareket halinde olmak enerjimi yeniliyor." },
+        7: { label: 'Yazılım', info: "Güçlü C# ve Python hakimiyetim bulunuyor. Yeni teknolojileri öğrenmeye hevesliyim." },
+        8: { label: 'Donanım', info: "Tinkercad ve Proteus gibi simülasyon araçlarıyla Full Adder (Tam Toplayıcı) ve dijital mantık devreleri tasarlıyorum." },
+        9: { label: 'Yabancı\nDil', info: "C1-C2 seviye İngilizcem bulunuyor. Ayrıca Rusça ve Çince'ye meraklıyım." },
+        10: { label: 'Satranç', info: "Satranç oynamayı severim" },
+        11: { label: 'Hedeflerim', info: "Şuanki en büyük hedefim Hawaii'ye gitmektir" },
+        12: { label: 'Mutfak', info: "Mutfakla aram çok mükemmeldir. Dünya mutfağına hakimim. El becerisi olarak fırın işlerinde iyiyimdir. Pizza, pide gibi ürünleri rahatlıkla çıkartabilirim" },
+        13: { label: 'İletişim', info: "Telefon Numaram : 0 541 601 70 33\nİnstagram : emir.uzun.n\nLinkedin : https://www.linkedin.com/in/emiruzunn/" }
+    },
+    en: {
+        1: { label: 'Who Am I?', info: "Hello, I am Muhammet Emir Uzun. I am a 2nd-year Computer Engineering student at Balıkesir University. I invite you to have some fun on my site. Ready to explore?" },
+        2: { label: 'Interests', info: "Activities where I refresh my mind and focus during my free time." },
+        3: { label: 'Technical\nSkills', info: "I am proficient in engineering application procedures. Suitable for large-scale projects." },
+        4: { label: 'Guitar', info: "Engaging with music, especially playing the guitar, helps me relieve the stress of the day." },
+        5: { label: 'E-Sports', info: "I love competing in arenas, especially CS2 and CS 1.6. Latency times and performance optimizations are important to me." },
+        6: { label: 'Hiking', info: "Hiking in nature, getting fresh air, and being active renews my energy." },
+        7: { label: 'Software', info: "I have a strong command of C# and Python. I am eager to learn new technologies." },
+        8: { label: 'Hardware', info: "I design Full Adders and digital logic circuits using simulation tools like Tinkercad and Proteus." },
+        9: { label: 'Languages', info: "I have C1-C2 level English. I am also interested in Russian and Chinese." },
+        10: { label: 'Chess', info: "I love playing chess." },
+        11: { label: 'My Goals', info: "My current biggest goal is to go to Hawaii." },
+        12: { label: 'Culinary', info: "I have an excellent relationship with the kitchen. I am knowledgeable in world cuisine. I am good at baking as a manual skill; I can easily make products like pizza and Turkish pide." },
+        13: { label: 'Contact', info: "Phone Number: +90 541 601 70 33\nInstagram: emir.uzun.n\nLinkedIn: https://www.linkedin.com/in/emiruzunn/" }
+    }
+};
+
+const uiTranslations = {
+    tr: {
+        title: "Beynimin Haritası - Muhammet Emir",
+        musicTitle: "Müziği Aç/Kapat",
+        welcomeText: "<strong>Hoşgeldiniz</strong>, performans sorunları için lütfen sayfayı yenileyiniz. İçerik baloncukları tutup sürüklenebilir durumdadır. Ayrıca ekranın sol kenarında bulunan meydan okuma oyununu denemeyi unutmayın.",
+        challengeTitle: "🏆 Büyük Meydan Okuma",
+        challengeDesc: "60 saniyede en çok balonu patlat, tekneyi batır ve uçağı düşür! En yüksek skoru yapıp rekorlar listesine gir!",
+        startBtn: "Meydan Okumayı Başlat",
+        timeRemaining: "Kalan Süre:",
+        challengeScore: "Meydan Okuma Skoru:",
+        recordsTitle: "🥇 En İyi Rekorlar",
+        noRecords: "Henüz rekor yok",
+        pointsText: "Puan",
+        countdownStart: "BAŞLA!",
+        modalEnded: "🏆 Meydan Okuma Bitti!",
+        modalScoreDesc: "60 saniyede {score} puan kazandın!",
+        modalWriteName: "İsmini rekorlar listesine yazdır:",
+        namePlaceholder: "İsminiz...",
+        duplicateError: "Bu isim zaten listede var. Lütfen başka bir isim yazın.",
+        submitBtn: "Gönder",
+        failDesc: "Listeye giremediniz hahaha!",
+        failBtn: "Tamam",
+        enterNameAlert: "Lütfen bir isim girin!",
+        bubbleDefaultInfo: "Sadece etrafta süzülen bir fikir baloncuğu..."
+    },
+    en: {
+        title: "My Brain Map - Muhammet Emir",
+        musicTitle: "Toggle Music",
+        welcomeText: "<strong>Welcome</strong>! Please refresh the page if you experience performance issues. Content bubbles can be clicked and dragged. Also, don't forget to try the challenge game on the left side of the screen.",
+        challengeTitle: "🏆 The Grand Challenge",
+        challengeDesc: "Pop as many balloons, sink as many boats, and shoot down as many planes as you can in 60 seconds! Get the highest score to enter the leaderboard!",
+        startBtn: "Start Challenge",
+        timeRemaining: "Time Remaining:",
+        challengeScore: "Challenge Score:",
+        recordsTitle: "🥇 Top High Scores",
+        noRecords: "No records yet",
+        pointsText: "Points",
+        countdownStart: "START!",
+        modalEnded: "🏆 Challenge Finished!",
+        modalScoreDesc: "You scored {score} points in 60 seconds!",
+        modalWriteName: "Write your name on the leaderboard:",
+        namePlaceholder: "Your name...",
+        duplicateError: "This name is already on the list. Please write another name.",
+        submitBtn: "Submit",
+        failDesc: "You couldn't make the list, hahaha!",
+        failBtn: "OK",
+        enterNameAlert: "Please enter a name!",
+        bubbleDefaultInfo: "Just an idea bubble floating around..."
+    }
+};
+
+function changeLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('selectedLanguage', lang);
+    
+    // Dil etiketine lang özniteliğini ata
+    document.documentElement.lang = lang;
+    
+    // UI butonlarını güncelle
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById('lang-' + lang);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    const t = uiTranslations[lang];
+    
+    // Sayfa başlığı
+    document.title = t.title;
+    
+    // Müzik kontrolü ipucu
+    const musicCtrl = document.getElementById('music-control');
+    if (musicCtrl) musicCtrl.title = t.musicTitle;
+    
+    // Hoşgeldiniz paneli
+    const welcomePanel = document.getElementById('welcome-panel');
+    if (welcomePanel) {
+        welcomePanel.innerHTML = t.welcomeText;
+    }
+    
+    // Meydan okuma paneli
+    const panel = document.getElementById('challenge-panel');
+    if (panel) {
+        const titleEl = panel.querySelector('.dashboard-title');
+        if (titleEl) titleEl.innerText = t.challengeTitle;
+        
+        const descEl = document.querySelector('#challenge-idle p');
+        if (descEl) descEl.innerText = t.challengeDesc;
+        
+        const startBtn = document.getElementById('start-challenge-btn');
+        if (startBtn) startBtn.innerText = t.startBtn;
+        
+        const timeRemainingLabel = document.querySelector('#challenge-active .stat-item:nth-child(1) .stat-label');
+        if (timeRemainingLabel) timeRemainingLabel.innerText = t.timeRemaining;
+        
+        const scoreLabel = document.querySelector('#challenge-active .stat-item:nth-child(2) .stat-label');
+        if (scoreLabel) scoreLabel.innerText = t.challengeScore;
+        
+        const recordsTitle = panel.querySelector('.leaderboard-title');
+        if (recordsTitle) recordsTitle.innerText = t.recordsTitle;
+    }
+    
+    // Skor tablosunu dil ile yenile
+    loadLeaderboard();
+    
+    // İsim girişi modali
+    const nameModal = document.getElementById('name-modal');
+    if (nameModal) {
+        const titleEl = nameModal.querySelector('.modal-title');
+        if (titleEl) titleEl.innerText = t.modalEnded;
+        
+        const scoreDescEl = nameModal.querySelector('p.modal-text');
+        if (scoreDescEl) {
+            scoreDescEl.innerHTML = t.modalScoreDesc.replace('{score}', `<span id="final-score-display" style="font-weight: 800; color: #002244;">${challengeScore}</span>`);
+        }
+        
+        const qualifyText = nameModal.querySelector('#qualify-section p.modal-text');
+        if (qualifyText) qualifyText.innerText = t.modalWriteName;
+        
+        const inputEl = document.getElementById('player-name-input');
+        if (inputEl) inputEl.placeholder = t.namePlaceholder;
+        
+        const errorEl = document.getElementById('modal-error-msg');
+        if (errorEl) errorEl.innerText = t.duplicateError;
+        
+        const submitBtn = nameModal.querySelector('#qualify-section .modal-btn');
+        if (submitBtn) submitBtn.innerText = t.submitBtn;
+        
+        const failText = nameModal.querySelector('#fail-section p.modal-text');
+        if (failText) failText.innerText = t.failDesc;
+        
+        const failBtn = nameModal.querySelector('#fail-section .modal-btn');
+        if (failBtn) failBtn.innerText = t.failBtn;
+    }
+    
+    // Zihin haritası balon düğümlerini güncelle
+    if (typeof nodes !== 'undefined' && nodes !== null) {
+        const updates = [];
+        nodes.forEach(node => {
+            if (node.isBubble) {
+                updates.push({
+                    id: node.id,
+                    info: t.bubbleDefaultInfo
+                });
+            } else {
+                const trans = nodeTranslations[lang][node.id];
+                if (trans) {
+                    updates.push({
+                        id: node.id,
+                        rawLabel: trans.label,
+                        info: trans.info,
+                        image: createWaterDropURL(trans.label, node.baseColor, false, node.globalOpacity !== undefined ? node.globalOpacity : 1.0, node.pathIndex)
+                    });
+                }
+            }
+        });
+        nodes.update(updates);
+        
+        // Detay paneli aktifse içeriğini de çevir
+        const detailPanel = document.getElementById('detail-panel');
+        if (detailPanel && detailPanel.classList.contains('active') && typeof network !== 'undefined') {
+            const selected = network.getSelectedNodes();
+            if (selected.length > 0) {
+                const activeNode = nodes.get(selected[0]);
+                if (activeNode) {
+                    const titleEl = document.getElementById('panel-title');
+                    if (titleEl) titleEl.innerText = activeNode.rawLabel.replace('\n', ' ');
+                    
+                    const contentEl = document.getElementById('panel-content');
+                    if (contentEl) contentEl.innerText = activeNode.info;
+                }
+            }
+        }
+    }
+}
+
 const rawNodes = [
-{ id: 1, label: 'Ben Kimim ?', baseColor: '#00d4ff', size: 90, info: "Merhaba ben Muhammet Emir Uzun. Balıkesir Üniversitesi Bilgisayar Mühendisliği 2. sınıf öğrencisiyim. Sizleri sitemde eğlenceye davet ediyorum. Keşfetmeye hazır mısınız ?" },
-{ id: 2, label: 'İlgi\nAlanları', baseColor: '#5ce1e6', size: 60, info: "Boş vakitlerimde zihnimi tazelediğim ve odaklandığım aktiviteler." },
-{ id: 3, label: 'Teknik\nBeceriler', baseColor: '#38ef7d', size: 60, info: "Mühendislik uygulamalarındaki prosedürlere hakimim. Büyük projelere uygunum." },
-{ id: 9, label: 'Yabancı\nDil', baseColor: '#ffd933', size: 60, info: "C1-C2 seviye İngilizcem bulunuyor. Ayrıca Rusça ve Çince'ye meraklıyım." },
-{ id: 4, label: 'Gitar', baseColor: '#7afcff', size: 45, info: "Müzikle uğraşmak, özellikle gitar çalmak günün stresini atmamı sağlıyor." },
-{ id: 5, label: 'E-Spor', baseColor: '#7afcff', size: 45, info: "Özellikle CS2 ve CS 1.6'da rekabetçi arenada yer almayı seviyorum. Gecikme süreleri ve performans optimizasyonları benim için önemli." },
-{ id: 6, label: 'Hiking', baseColor: '#7afcff', size: 45, info: "Doğada yürüyüş yapmak, temiz hava almak ve hareket halinde olmak enerjimi yeniliyor." },
-{ id: 10, label: 'Satranç', baseColor: '#7afcff', size: 45, info: "Satranç oynamayı severim" },
-{ id: 7, label: 'Yazılım', baseColor: '#a8ff78', size: 45, info: "Güçlü C# ve Python hakimiyetim bulunuyor. Yeni teknolojileri öğrenmeye hevesliyim." },
-{ id: 8, label: 'Donanım', baseColor: '#a8ff78', size: 45, info: "Tinkercad ve Proteus gibi simülasyon araçlarıyla Full Adder (Tam Toplayıcı) ve dijital mantık devreleri tasarlıyorum." },
-{ id: 11, label: 'Hedeflerim', baseColor: '#ff9a9e', size: 60, info: "Şuanki en büyük hedefim Hawaii'ye gitmektir" },
-{ id: 12, label: 'Mutfak', baseColor: '#7afcff', size: 45, info: "Mutfakla aram çok mükemmeldir. Dünya mutfağına hakimim. El becerisi olarak fırın işlerinde iyiyimdir. Pizza, pide gibi ürünleri rahatlıkla çıkartabilirim" },
-{ id: 13, label: 'İletişim', baseColor: '#a29bfe', size: 60, info: "Telefon Numaram : 0 541 601 70 33\nİnstagram : emir.uzun.n\nLinkedin : https://www.linkedin.com/in/emiruzunn/" }
+{ id: 1, label: nodeTranslations[currentLanguage][1].label, baseColor: '#00d4ff', size: 90, info: nodeTranslations[currentLanguage][1].info },
+{ id: 2, label: nodeTranslations[currentLanguage][2].label, baseColor: '#5ce1e6', size: 60, info: nodeTranslations[currentLanguage][2].info },
+{ id: 3, label: nodeTranslations[currentLanguage][3].label, baseColor: '#38ef7d', size: 60, info: nodeTranslations[currentLanguage][3].info },
+{ id: 9, label: nodeTranslations[currentLanguage][9].label, baseColor: '#ffd933', size: 60, info: nodeTranslations[currentLanguage][9].info },
+{ id: 4, label: nodeTranslations[currentLanguage][4].label, baseColor: '#7afcff', size: 45, info: nodeTranslations[currentLanguage][4].info },
+{ id: 5, label: nodeTranslations[currentLanguage][5].label, baseColor: '#7afcff', size: 45, info: nodeTranslations[currentLanguage][5].info },
+{ id: 6, label: nodeTranslations[currentLanguage][6].label, baseColor: '#7afcff', size: 45, info: nodeTranslations[currentLanguage][6].info },
+{ id: 10, label: nodeTranslations[currentLanguage][10].label, baseColor: '#7afcff', size: 45, info: nodeTranslations[currentLanguage][10].info },
+{ id: 7, label: nodeTranslations[currentLanguage][7].label, baseColor: '#a8ff78', size: 45, info: nodeTranslations[currentLanguage][7].info },
+{ id: 8, label: nodeTranslations[currentLanguage][8].label, baseColor: '#a8ff78', size: 45, info: nodeTranslations[currentLanguage][8].info },
+{ id: 11, label: nodeTranslations[currentLanguage][11].label, baseColor: '#ff9a9e', size: 60, info: nodeTranslations[currentLanguage][11].info },
+{ id: 12, label: nodeTranslations[currentLanguage][12].label, baseColor: '#7afcff', size: 45, info: nodeTranslations[currentLanguage][12].info },
+{ id: 13, label: nodeTranslations[currentLanguage][13].label, baseColor: '#a29bfe', size: 60, info: nodeTranslations[currentLanguage][13].info }
 ];
 
 let edgesArray = [
@@ -1840,7 +2098,7 @@ if (nodeData.isBubble) {
             size: Math.random() * 15 + 10,
             x: rx,
             y: ry,
-            info: "Sadece etrafta süzülen bir fikir baloncuğu...",
+            info: uiTranslations[currentLanguage].bubbleDefaultInfo,
             rawLabel: '',
             isBubble: true
         });
@@ -2224,12 +2482,14 @@ function initWelcomePanel() {
 window.addEventListener('DOMContentLoaded', () => {
     initGameInteractions();
     initWelcomePanel();
+    changeLanguage(currentLanguage);
 });
 
 // Zaten DOM yüklendiyse hemen çalıştır (vis-network vs. asenkron yüklenebildiği için garantiye alıyoruz)
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     initGameInteractions();
     initWelcomePanel();
+    changeLanguage(currentLanguage);
 }
 
 // ==========================================
@@ -2257,7 +2517,7 @@ function startCountdown(onComplete) {
             count--;
             setTimeout(tick, 1000);
         } else {
-            el.innerText = "BAŞLA!";
+            el.innerText = uiTranslations[currentLanguage].countdownStart;
             el.style.animation = 'none';
             el.offsetHeight; // trigger reflow
             el.style.animation = 'countdownPop 0.8s ease-in-out forwards';
@@ -2392,8 +2652,14 @@ function endChallenge() {
     // Oyun müziğini kısarak durdur ve ana müziğe geri dön (Fade Transition)
     stopChallengeMusic();
     
-    // İsim girme modalini aç
-    document.getElementById('final-score-display').innerText = challengeScore;
+    // İsim girme modalini aç (ve metnini o anki dile göre güncelle)
+    const t = uiTranslations[currentLanguage];
+    const scoreDescEl = document.querySelector('#name-modal p.modal-text');
+    if (scoreDescEl) {
+        scoreDescEl.innerHTML = t.modalScoreDesc.replace('{score}', `<span id="final-score-display" style="font-weight: 800; color: #002244;">${challengeScore}</span>`);
+    } else {
+        document.getElementById('final-score-display').innerText = challengeScore;
+    }
     
     // Lider tablosuna girme kontrolü
     const leaderboard = JSON.parse(localStorage.getItem('bubbleLeaderboard') || "[]");
@@ -2432,16 +2698,17 @@ function loadLeaderboard() {
     
     listEl.innerHTML = "";
     const leaderboard = JSON.parse(localStorage.getItem('bubbleLeaderboard') || "[]");
+    const t = uiTranslations[currentLanguage];
     
     if (leaderboard.length === 0) {
-        listEl.innerHTML = `<li style="list-style:none; margin-left:-20px; color:rgba(0,51,102,0.6);">Henüz rekor yok</li>`;
+        listEl.innerHTML = `<li style="list-style:none; margin-left:-20px; color:rgba(0,51,102,0.6);">${t.noRecords}</li>`;
         return;
     }
     
     leaderboard.forEach(entry => {
         const li = document.createElement('li');
         li.className = 'leaderboard-item';
-        li.innerHTML = `${entry.name}: <span>${entry.score} Puan</span>`;
+        li.innerHTML = `${entry.name}: <span>${entry.score} ${t.pointsText}</span>`;
         listEl.appendChild(li);
     });
 }
@@ -2453,7 +2720,7 @@ function submitScore() {
     const name = nameInput.value.trim();
     
     if (!name) {
-        alert("Lütfen bir isim girin!");
+        alert(uiTranslations[currentLanguage].enterNameAlert);
         return;
     }
     
@@ -2487,7 +2754,9 @@ function submitScore() {
 }
 
 // Sayfa ilk yüklendiğinde rekorları çek
-window.addEventListener('load', loadLeaderboard);
+window.addEventListener('load', () => {
+    loadLeaderboard();
+});
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     loadLeaderboard();
 }
