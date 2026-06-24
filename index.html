@@ -2026,7 +2026,7 @@ function playExplosionSound() {
 let audioCtx = null;
 // Dönüm noktası (Milestone) müzik ve kelime gösterimi
 function playMilestoneSound(score) {
-    const audioFile = `${score / 10}.mp3`; // 1.mp3, 2.mp3, 3.mp3, 4.mp3, 5.mp3, 6.mp3, 7.mp3
+    const audioFile = `${score / 10}.mp3`; // 1.mp3'ten 10.mp3'e sırasıyla
     const milestoneAudio = new Audio(audioFile);
     
     try {
@@ -2052,7 +2052,7 @@ function playMilestoneSound(score) {
     
     milestoneAudio.play().catch(e => console.log(`${audioFile} oynatılamadı:`, e));
     
-    // Kelimeler 1.mp3'ten 7.mp3'e sırasıyla
+    // Kelimeler ve sesler sırasıyla
     const words = {
         10: "PERFECT!",
         20: "AMAZING!",
@@ -2060,7 +2060,10 @@ function playMilestoneSound(score) {
         40: "GOOD!",
         50: "PERFECT!",
         60: "HELL YEAH !",
-        70: "HU HUU"
+        70: "HU HUU",
+        80: "UNBELIEVABLE!",
+        90: "GODLIKE!",
+        100: "LEGENDARY!"
     };
     showEnergeticWord(words[score]);
 }
@@ -2087,8 +2090,8 @@ function incrementChallengeScore() {
     const hudKills = document.getElementById('hud-kills');
     if (hudKills) hudKills.innerText = challengeScore;
     
-    // 10, 20, 30, 40, 50, 60, 70 puanlarda özel müzik ve kelime göster
-    if ([10, 20, 30, 40, 50, 60, 70].includes(challengeScore)) {
+    // 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 puanlarda özel müzik ve kelime göster
+    if ([10, 20, 30, 40, 50, 60, 70, 80, 90, 100].includes(challengeScore)) {
         playMilestoneSound(challengeScore);
     }
 }
