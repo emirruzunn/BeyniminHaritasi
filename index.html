@@ -1035,6 +1035,37 @@ body {
     }
 }
 
+/* Hoşgeldiniz Paneli */
+.welcome-panel {
+    position: absolute;
+    top: calc(5% + 140px);
+    right: 8%;
+    width: 320px;
+    max-width: 90%;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 100, 200, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    z-index: 99;
+    color: #003366;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.6;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+    transform: translateY(15px);
+}
+.welcome-panel.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 </style>
 </head>
 <body>
@@ -1107,6 +1138,9 @@ body {
 
 
 <div class="sun"></div>
+<div class="welcome-panel" id="welcome-panel">
+    <strong>Hoşgeldiniz</strong>, performans sorunları için lütfen sayfayı yenileyiniz. İçerik baloncukları tutup sürüklenebilir durumdadır. Ayrıca ekranın sol kenarında bulunan meydan okuma oyununu denemeyi unutmayın.
+</div>
 <div class="clouds-container">
     <!-- Bulut 1 (Büyük / Hızlı / Alçak) -->
     <div class="cloud cloud1">
@@ -2162,14 +2196,37 @@ function initGameInteractions() {
     }
 }
 
+// Hoşgeldiniz Paneli Animasyonu
+function initWelcomePanel() {
+    const welcomePanel = document.getElementById('welcome-panel');
+    if (!welcomePanel) return;
+    
+    // Sayfa yüklendikten yarım saniye sonra yavaşça gelsin
+    setTimeout(() => {
+        welcomePanel.classList.add('visible');
+        
+        // 10 saniye dursun
+        setTimeout(() => {
+            welcomePanel.classList.remove('visible');
+            
+            // Tamamen görünmez olduktan sonra tıklama engellemesi/ekranı kaplamaması için display: none yapalım
+            setTimeout(() => {
+                welcomePanel.style.display = 'none';
+            }, 1500);
+        }, 10000);
+    }, 500);
+}
+
 // Etkileşimleri sayfa yüklendiğinde başlat
 window.addEventListener('DOMContentLoaded', () => {
     initGameInteractions();
+    initWelcomePanel();
 });
 
 // Zaten DOM yüklendiyse hemen çalıştır (vis-network vs. asenkron yüklenebildiği için garantiye alıyoruz)
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     initGameInteractions();
+    initWelcomePanel();
 }
 
 // ==========================================
