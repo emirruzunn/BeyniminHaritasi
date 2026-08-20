@@ -1120,7 +1120,7 @@ body {
 
 <!-- Arka Plan Müziği -->
 <audio id="bg-music" autoplay loop preload="auto">
-    <source src="muzik.mp3" type="audio/mp3">
+    <source src="assets/audio/muzik.mp3" type="audio/mp3">
 </audio>
 
 <!-- Müzik Kontrol Düğmesi -->
@@ -2140,7 +2140,7 @@ const bgMusic = document.getElementById('bg-music');
 const musicControl = document.getElementById('music-control');
 
 // Meydan Okuma Müziği
-const challengeMusic = new Audio('oyun.mp3');
+const challengeMusic = new Audio('assets/audio/oyun.mp3');
 challengeMusic.loop = true;
 challengeMusic.preload = "auto";
 
@@ -2264,7 +2264,7 @@ let popSoundPool = [];
 
 function playPopSound() {
     if (popSoundPool.length === 0) {
-        popSoundPool = ['berat1.mp3', 'berat2.mp3', 'berat3.mp3'];
+        popSoundPool = ['assets/audio/berat1.mp3', 'assets/audio/berat2.mp3', 'assets/audio/berat3.mp3'];
         // Fisher-Yates Shuffle ile havuzu karıştır
         for (let i = popSoundPool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -2277,14 +2277,14 @@ function playPopSound() {
 }
 
 function playExplosionSound() {
-    const snd = new Audio('patlama.mp3');
-    snd.play().catch(e => console.log("patlama.mp3 oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
+    const snd = new Audio('assets/audio/patlama.mp3');
+    snd.play().catch(e => console.log("assets/audio/patlama.mp3 oynatılamadı (muhtemelen dosya eksik veya etkileşim gerekiyor):", e));
 }
 
 let audioCtx = null;
 // Dönüm noktası (Milestone) müzik ve kelime gösterimi
 function playMilestoneSound(score) {
-    const audioFile = `${score / 10}.mp3`; // 1.mp3'ten 10.mp3'e sırasıyla
+    const audioFile = `assets/audio/${score / 10}.mp3`; // 1.mp3'ten 10.mp3'e sırasıyla
     const milestoneAudio = new Audio(audioFile);
     
     try {
